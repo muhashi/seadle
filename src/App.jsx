@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
-import { geoCentroid, geoDistance, geoOrthographic, geoPath, geoGraticule } from 'd3-geo';
+import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { drag } from 'd3-drag';
 import { select } from 'd3-selection';
 import * as topojson from 'topojson-client';
@@ -14,6 +14,12 @@ const SeadleGame = () => {
   const [seaData, setSeaData] = useState(null);
   const [targetSea, setTargetSea] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: null
+  });
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
@@ -131,6 +137,21 @@ const SeadleGame = () => {
       });
   };
 
+  const showTooltip = (event, data) => {
+    const bounds = svgRef.current.getBoundingClientRect();
+
+    setTooltip({
+      visible: true,
+      x: event.clientX - bounds.left + 12,
+      y: event.clientY - bounds.top + 12,
+      content: data
+    });
+  };
+
+  const hideTooltip = () => {
+    setTooltip(t => ({ ...t, visible: false }));
+  };
+
   // Handle guess submission
   const handleGuess = () => {
     if (!guess.trim() || !seaData || !targetSea || gameWon) return;
@@ -245,7 +266,6 @@ const SeadleGame = () => {
       .call(addHoverHandlers);
 
     const updatePaths = () => {
-      // graticulePath.attr('d', path);
       guessedPathsRef.current
         .selectAll('path')
         .attr('d', d => path(d.feature));
@@ -296,7 +316,32 @@ const SeadleGame = () => {
       .attr('fill', d => d.color)
       .attr('stroke', '#333')
       .attr('stroke-width', 1)
-      .call(addHoverHandlers)
+      .style('cursor', 'pointer')
+      .on('mouseenter', function (event, d) {
+        select(this)
+          .raise()
+          .attr('stroke', '#000')
+          .attr('stroke-width', 2)
+          .attr('fill-opacity', 0.85);
+
+        showTooltip(event, d);
+      })
+      .on('mousemove', (event) => {
+        const bounds = svgRef.current.getBoundingClientRect();
+        setTooltip(t => ({
+          ...t,
+          x: event.clientX - bounds.left + 12,
+          y: event.clientY - bounds.top + 12
+        }));
+      })
+      .on('mouseleave', function () {
+        select(this)
+          .attr('stroke', '#333')
+          .attr('stroke-width', 1)
+          .attr('fill-opacity', 1);
+
+        hideTooltip();
+      })
       .merge(paths)
       .attr('d', d => path(d.feature));
 
@@ -317,7 +362,32 @@ const SeadleGame = () => {
           </Paper>
         )}
 
-        <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px' }}></svg>
+        <div style={{ position: 'relative' }}>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px' }}></svg>
+
+          {tooltip.visible && tooltip.content && (
+            <Paper
+              shadow="md"
+              p="xs"
+              radius="sm"
+              style={{
+                position: 'absolute',
+                left: tooltip.x,
+                top: tooltip.y,
+                pointerEvents: 'none',
+                zIndex: 10,
+                background: 'rgba(255, 255, 255, 0.95)'
+              }}
+            >
+              <Text size="sm" weight={600}>
+                {tooltip.content.name}
+              </Text>
+              <Text size="xs" color="dimmed">
+                {Math.round(tooltip.content.distance)} km away
+              </Text>
+            </Paper>
+          )}
+        </div>
 
         {!gameWon && (
           <div style={{ position: 'relative' }}>
