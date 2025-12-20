@@ -216,15 +216,6 @@ const SeadleGame = () => {
       .attr('r', 250)
       .attr('fill', '#e0f2ff');
 
-    // Draw graticule
-    const graticule = geoGraticule();
-    const graticulePath = svg.append('path')
-      .datum(graticule)
-      .attr('d', path)
-      .attr('fill', 'none')
-      .attr('stroke', '#ccc')
-      .attr('stroke-width', 0.5);
-
     // Draw guessed seas
     const guessedPaths = svg.append('g')
       .attr('class', 'guessed-seas');
@@ -254,7 +245,7 @@ const SeadleGame = () => {
       .call(addHoverHandlers);
 
     const updatePaths = () => {
-      graticulePath.attr('d', path);
+      // graticulePath.attr('d', path);
       guessedPathsRef.current
         .selectAll('path')
         .attr('d', d => path(d.feature));
