@@ -136,12 +136,12 @@ const SeadleGame = () => {
     const projection = geoOrthographic()
       .scale(250)
       .translate([width / 2, height / 2])
-      .rotate(rotation);
+      .rotate([0, 0]);
 
     const path = geoPath().projection(projection);
 
     // Draw ocean
-    svg.append('circle')
+    const ocean = svg.append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', 250)
@@ -149,7 +149,7 @@ const SeadleGame = () => {
 
     // Draw graticule
     const graticule = geoGraticule();
-    svg.append('path')
+    const graticulePath = svg.append('path')
       .datum(graticule)
       .attr('d', path)
       .attr('fill', 'none')
@@ -157,8 +157,9 @@ const SeadleGame = () => {
       .attr('stroke-width', 0.5);
 
     // Draw guessed seas
+    const guessedPaths = svg.append('g').attr('class', 'guessed-seas');
     guesses.forEach(g => {
-      svg.append('path')
+      guessedPaths.append('path')
         .datum(g.feature)
         .attr('d', path)
         .attr('fill', g.color)
@@ -167,7 +168,8 @@ const SeadleGame = () => {
     });
 
     // Draw all seas faintly
-    svg.selectAll('.sea')
+    const seaPaths = svg.append('g').attr('class', 'all-seas');
+    seaPaths.selectAll('.sea')
       .data(seaData.features.filter(f => !guesses.find(g => g.name === f.properties.NAME)))
       .enter()
       .append('path')
@@ -176,6 +178,12 @@ const SeadleGame = () => {
       .attr('fill', 'rgba(200, 200, 200, 0.3)')
       .attr('stroke', '#999')
       .attr('stroke-width', 0.5);
+
+    const updatePaths = () => {
+      graticulePath.attr('d', path);
+      guessedPaths.selectAll('path').attr('d', path);
+      seaPaths.selectAll('.sea').attr('d', path);
+    };
 
     // Add drag to rotate
     const dragd3 = drag()
@@ -186,18 +194,19 @@ const SeadleGame = () => {
         const radius = projection.scale();
         const scale = 360 / (2 * Math.PI * radius);
 
-        newRotation = [
+        const newRotation = [
           currentRotation[0] + dx * scale,
           currentRotation[1] - dy * scale,
           currentRotation[2]
         ];
 
-        setRotation(newRotation);
+        projection.rotate(newRotation);
+        updatePaths();
       });
 
     svg.call(dragd3);
 
-  }, [seaData, guesses, rotation]);
+  }, [seaData, guesses]);
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
