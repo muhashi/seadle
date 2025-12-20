@@ -32,7 +32,7 @@ const SeadleGame = () => {
   const HOVER_FILL_OPACITY = 0.8;
   const MIN_SCALE = 200;
   const MAX_SCALE = 2000;
-  const ZOOM_STEP = 100;
+  const ZOOM_STEP = 1.5;
 
   // Load data
   useEffect(() => {
@@ -77,11 +77,11 @@ const SeadleGame = () => {
   // Get color based on distance
   const getColorForDistance = (distance, maxDistance) => {
     const ratio = distance / maxDistance;
-    if (ratio < 0.2) return '#ff0000';
-    if (ratio < 0.4) return '#ff6600';
-    if (ratio < 0.6) return '#ffaa00';
-    if (ratio < 0.8) return '#00aaff';
-    return '#0066ff';
+    if (ratio < 0.2) return '#0061bd';
+    if (ratio < 0.4) return '#00aaff';
+    if (ratio < 0.6) return '#5ebceb';
+    if (ratio < 0.8) return '#b5e0f5';
+    return '#e1f3fc';
   };
 
   const rotateToFeature = (feature, duration = 750) => {
@@ -136,7 +136,7 @@ const SeadleGame = () => {
       .on('mouseleave', function () {
         select(this)
           .attr('stroke', '#999')
-          .attr('stroke-width', 0.5)
+          .attr('stroke-width', 1)
           .attr('fill-opacity', 1);
       });
   };
@@ -162,7 +162,7 @@ const SeadleGame = () => {
 
     const nextScale = Math.max(
       MIN_SCALE,
-      Math.min(MAX_SCALE, projection.scale() + delta)
+      Math.min(MAX_SCALE, projection.scale() * delta)
     );
 
     const startScale = projection.scale();
@@ -282,7 +282,7 @@ const SeadleGame = () => {
       .attr('d', path)
       .attr('fill', '#e0f2ff')
       .attr('stroke', '#999')
-      .attr('stroke-width', 0.5)
+      .attr('stroke-width', 1)
       .style('cursor', 'default');
 
     const updatePaths = () => {
@@ -357,7 +357,7 @@ const SeadleGame = () => {
           pathSel
             .attr('fill', '#e0f2ff')
             .attr('stroke', '#999')
-            .attr('stroke-width', 0.5);
+            .attr('stroke-width', 1);
         }
 
         // Shared hover highlight
@@ -388,7 +388,7 @@ const SeadleGame = () => {
           .on('mouseleave', function () {
             pathSel
               .attr('stroke', guess ? '#333' : '#999')
-              .attr('stroke-width', guess ? 1 : 0.5)
+              .attr('stroke-width', 1)
               .attr('fill-opacity', 1);
 
             if (guess) hideTooltip();
@@ -463,10 +463,10 @@ const SeadleGame = () => {
         )}
 
         <div style={{ position: 'relative' }}>
-          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px' }}></svg>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)' }}></svg>
           <Group position="center" spacing="xs">
             <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
-            <Button size="xs" onClick={() => zoomBy(-ZOOM_STEP)}>-</Button>
+            <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
           </Group>
           {tooltip.visible && tooltip.content && (
             <Paper
@@ -528,7 +528,7 @@ const SeadleGame = () => {
         <Paper p="md" withBorder>
           <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
           <Stack spacing="xs">
-            {guesses.map((g, i) => (
+            {guesses.toSorted((a, b) => a.distance - b.distance).map((g, i) => (
               <Group key={i} position="apart">
                 <Badge color={g.distance === 0 ? 'green' : 'gray'}>
                   {g.name}
@@ -546,12 +546,6 @@ const SeadleGame = () => {
               </Group>
             ))}
           </Stack>
-        </Paper>
-
-        <Paper p="md" withBorder>
-          <Text size="sm" color="dimmed">
-            🔴 Red = Very close | 🟠 Orange = Close | 🟡 Yellow = Medium | 🔵 Blue = Far
-          </Text>
         </Paper>
       </Stack>
     </div>
