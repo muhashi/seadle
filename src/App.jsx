@@ -270,41 +270,27 @@ const SeadleGame = () => {
 
     globeBackgroundRef.current = globeBackground;
 
-    // Draw guessed seas
-    const guessedPaths = svg.append('g')
-      .attr('class', 'guessed-seas');
-
-    guesses.forEach(g => {
-      guessedPaths.append('path')
-        .datum(g.feature)
-        .attr('d', path)
-        .attr('fill', g.color)
-        .attr('stroke', '#333')
-        .attr('stroke-width', 1);
-    }); 
-
-    guessedPathsRef.current = guessedPaths;
-
     // Draw all seas faintly
     const seaPaths = svg.append('g').attr('class', 'all-seas');
+
     seaPaths.selectAll('.sea')
-      .data(seaData.features.filter(f => !guesses.find(g => g.name === f.properties.NAME)))
+      .data(seaData.features, d => d.properties.NAME)
       .enter()
       .append('path')
       .attr('class', 'sea')
+      .attr('data-name', d => d.properties.NAME)
       .attr('d', path)
       .attr('fill', '#e0f2ff')
       .attr('stroke', '#999')
       .attr('stroke-width', 0.5)
-      .call(addHoverHandlers);
+      .style('cursor', 'default');
 
     const updatePaths = () => {
       globeBackgroundRef.current
         .attr('r', projection.scale());
-      guessedPathsRef.current
-        .selectAll('path')
-        .attr('d', d => path(d.feature));
-      seaPaths.selectAll('.sea').attr('d', path);
+
+      seaPaths.selectAll('.sea')
+        .attr('d', path);
     };
     updatePathsRef.current = updatePaths;
 
@@ -347,6 +333,68 @@ const SeadleGame = () => {
       updatePathsRef.current();
     });
   }, [seaData]);
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = select(svgRef.current);
+    const guessedByName = new Map(
+      guesses.map(g => [g.name, g])
+    );
+
+    svg.selectAll('.sea')
+      .each(function (d) {
+        const pathSel = select(this);
+        const guess = guessedByName.get(d.properties.NAME);
+
+        // Base styling
+        if (guess) {
+          pathSel
+            .attr('fill', guess.color)
+            .attr('stroke', '#333')
+            .attr('stroke-width', 1);
+        } else {
+          pathSel
+            .attr('fill', '#e0f2ff')
+            .attr('stroke', '#999')
+            .attr('stroke-width', 0.5);
+        }
+
+        // Shared hover highlight
+        pathSel
+          .style('cursor', 'pointer')
+          .on('mouseenter', function (event) {
+            pathSel
+              .raise()
+              .attr('stroke', HOVER_STROKE)
+              .attr('stroke-width', HOVER_STROKE_WIDTH)
+              .attr('fill-opacity', HOVER_FILL_OPACITY);
+
+            // Tooltip only for guessed seas
+            if (guess) {
+              showTooltip(event, guess);
+            }
+          })
+          .on('mousemove', function (event) {
+            if (!guess) return;
+
+            const bounds = svgRef.current.getBoundingClientRect();
+            setTooltip(t => ({
+              ...t,
+              x: event.clientX - bounds.left + 12,
+              y: event.clientY - bounds.top + 12
+            }));
+          })
+          .on('mouseleave', function () {
+            pathSel
+              .attr('stroke', guess ? '#333' : '#999')
+              .attr('stroke-width', guess ? 1 : 0.5)
+              .attr('fill-opacity', 1);
+
+            if (guess) hideTooltip();
+          });
+      });
+  }, [guesses]);
 
   useEffect(() => {
     if (!updatePathsRef.current) return;
