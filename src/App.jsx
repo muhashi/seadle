@@ -25,10 +25,14 @@ const SeadleGame = () => {
   const pathRef = useRef(null);
   const updatePathsRef = useRef(null);
   const guessedPathsRef = useRef(null);
+  const globeBackgroundRef = useRef(null);
 
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
   const HOVER_FILL_OPACITY = 0.8;
+  const MIN_SCALE = 200;
+  const MAX_SCALE = 2000;
+  const ZOOM_STEP = 100;
 
   // Load data
   useEffect(() => {
@@ -152,6 +156,33 @@ const SeadleGame = () => {
     setTooltip(t => ({ ...t, visible: false }));
   };
 
+  const zoomBy = (delta) => {
+    const projection = projectionRef.current;
+    if (!projection) return;
+
+    const nextScale = Math.max(
+      MIN_SCALE,
+      Math.min(MAX_SCALE, projection.scale() + delta)
+    );
+
+    const startScale = projection.scale();
+    const start = performance.now();
+    const duration = 200;
+
+    const animate = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = t * t * (3 - 2 * t);
+
+      projection.scale(startScale + (nextScale - startScale) * eased);
+      updatePathsRef.current();
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+    updatePathsRef.current();
+  };
+
   // Handle guess submission
   const handleGuess = () => {
     if (!guess.trim() || !seaData || !targetSea || gameWon) return;
@@ -230,12 +261,14 @@ const SeadleGame = () => {
     projectionRef.current = projection;
     pathRef.current = path;
 
-    // Draw ocean
-    const ocean = svg.append('circle')
+    // Draw globe backrgound
+    const globeBackground = svg.append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
-      .attr('r', 250)
-      .attr('fill', '#e0f2ff');
+      .attr('r', projection.scale())
+      .attr('fill', '#d0f2d7');
+
+    globeBackgroundRef.current = globeBackground;
 
     // Draw guessed seas
     const guessedPaths = svg.append('g')
@@ -260,12 +293,14 @@ const SeadleGame = () => {
       .append('path')
       .attr('class', 'sea')
       .attr('d', path)
-      .attr('fill', 'rgba(200, 200, 200, 0.3)')
+      .attr('fill', '#e0f2ff')
       .attr('stroke', '#999')
       .attr('stroke-width', 0.5)
       .call(addHoverHandlers);
 
     const updatePaths = () => {
+      globeBackgroundRef.current
+        .attr('r', projection.scale());
       guessedPathsRef.current
         .selectAll('path')
         .attr('d', d => path(d.feature));
@@ -294,6 +329,23 @@ const SeadleGame = () => {
 
     svg.call(dragd3);
 
+    svg.on('wheel', (event) => {
+      event.preventDefault();
+
+      const projection = projectionRef.current;
+      if (!projection) return;
+
+      const currentScale = projection.scale();
+      const delta = -event.deltaY * 0.5;
+
+      const nextScale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, currentScale + delta)
+      );
+
+      projection.scale(nextScale);
+      updatePathsRef.current();
+    });
   }, [seaData]);
 
   useEffect(() => {
@@ -364,7 +416,10 @@ const SeadleGame = () => {
 
         <div style={{ position: 'relative' }}>
           <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px' }}></svg>
-
+          <Group position="center" spacing="xs">
+            <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
+            <Button size="xs" onClick={() => zoomBy(-ZOOM_STEP)}>-</Button>
+          </Group>
           {tooltip.visible && tooltip.content && (
             <Paper
               shadow="md"
