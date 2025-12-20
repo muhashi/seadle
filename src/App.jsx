@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
-import * as d3 from 'd3';
+import { geoCentroid, geoDistance, geoOrthographic, geoPath, geoGraticule } from 'd3-geo';
+import { drag } from 'd3-drag';
+import { select } from 'd3-selection';
 import * as topojson from 'topojson-client';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 
@@ -49,9 +51,9 @@ const SeadleGame = () => {
 
   // Calculate distance between two geographic features
   const calculateDistance = (feature1, feature2) => {
-    const centroid1 = d3.geoCentroid(feature1);
-    const centroid2 = d3.geoCentroid(feature2);
-    return d3.geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
+    const centroid1 = geoCentroid(feature1);
+    const centroid2 = geoCentroid(feature2);
+    return geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
   };
 
   // Get color based on distance
@@ -125,18 +127,18 @@ const SeadleGame = () => {
     const width = 600;
     const height = 600;
 
-    d3.select(svgRef.current).selectAll('*').remove();
+    select(svgRef.current).selectAll('*').remove();
 
-    const svg = d3.select(svgRef.current)
+    const svg = select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
 
-    const projection = d3.geoOrthographic()
+    const projection = geoOrthographic()
       .scale(250)
       .translate([width / 2, height / 2])
       .rotate(rotation);
 
-    const path = d3.geoPath().projection(projection);
+    const path = geoPath().projection(projection);
 
     // Draw ocean
     svg.append('circle')
@@ -146,7 +148,7 @@ const SeadleGame = () => {
       .attr('fill', '#e0f2ff');
 
     // Draw graticule
-    const graticule = d3.geoGraticule();
+    const graticule = geoGraticule();
     svg.append('path')
       .datum(graticule)
       .attr('d', path)
@@ -176,14 +178,24 @@ const SeadleGame = () => {
       .attr('stroke-width', 0.5);
 
     // Add drag to rotate
-    const drag = d3.drag()
+    const dragd3 = drag()
       .on('drag', (event) => {
-        const rotate = projection.rotate();
-        const k = 75 / projection.scale();
-        setRotation([rotate[0] + event.dx * k, rotate[1] - event.dy * k]);
+        const dx = event.dx;
+        const dy = event.dy;
+        const currentRotation = projection.rotate();
+        const radius = projection.scale();
+        const scale = 360 / (2 * Math.PI * radius);
+
+        newRotation = [
+          currentRotation[0] + dx * scale,
+          currentRotation[1] - dy * scale,
+          currentRotation[2]
+        ];
+
+        setRotation(newRotation);
       });
 
-    svg.call(drag);
+    svg.call(dragd3);
 
   }, [seaData, guesses, rotation]);
 
