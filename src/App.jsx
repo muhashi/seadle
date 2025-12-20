@@ -13,8 +13,16 @@ const SeadleGame = () => {
   const [gameWon, setGameWon] = useState(false);
   const [seaData, setSeaData] = useState(null);
   const [targetSea, setTargetSea] = useState(null);
-  const [rotation, setRotation] = useState([0, 0]);
   const [suggestions, setSuggestions] = useState([]);
+
+  const projectionRef = useRef(null);
+  const pathRef = useRef(null);
+  const updatePathsRef = useRef(null);
+  const guessedPathsRef = useRef(null);
+
+  const HOVER_STROKE = '#000';
+  const HOVER_STROKE_WIDTH = 2;
+  const HOVER_FILL_OPACITY = 0.8;
 
   // Load data
   useEffect(() => {
@@ -66,6 +74,63 @@ const SeadleGame = () => {
     return '#0066ff';
   };
 
+  const rotateToFeature = (feature, duration = 750) => {
+    if (!projectionRef.current || !updatePathsRef.current) return;
+
+    const projection = projectionRef.current;
+    const updatePaths = updatePathsRef.current;
+
+    const [lon, lat] = geoCentroid(feature);
+    const currentRotation = projection.rotate();
+    const targetRotation = [-lon, -lat, 0];
+
+    // Simple interpolation
+    const interpolate = (a, b, t) => a + (b - a) * t * t * (3 - 2 * t);
+
+    const start = performance.now();
+
+    const animate = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+
+      projection.rotate([
+        interpolate(currentRotation[0], targetRotation[0], t),
+        interpolate(currentRotation[1], targetRotation[1], t),
+        0
+      ]);
+
+      updatePaths();
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  };
+
+  const isVisible = (feature) => {
+    const [lon, lat] = geoCentroid(feature);
+    const [cx, cy] = projectionRef.current([lon, lat]);
+    return cx !== null && cy !== null;
+  };
+
+  const addHoverHandlers = (selection) => {
+    selection
+      .style('cursor', 'pointer')
+      .on('mouseenter', function (event, d) {
+        if (!isVisible(d.feature ?? d)) return;
+        select(this)
+          .raise()
+          .attr('stroke', HOVER_STROKE)
+          .attr('stroke-width', HOVER_STROKE_WIDTH)
+          .attr('fill-opacity', HOVER_FILL_OPACITY);
+      })
+      .on('mouseleave', function () {
+        select(this)
+          .attr('stroke', '#999')
+          .attr('stroke-width', 0.5)
+          .attr('fill-opacity', 1);
+      });
+  };
+
   // Handle guess submission
   const handleGuess = () => {
     if (!guess.trim() || !seaData || !targetSea || gameWon) return;
@@ -95,6 +160,7 @@ const SeadleGame = () => {
     };
 
     setGuesses([...guesses, newGuess]);
+    rotateToFeature(guessedSea);
     setGuess('');
     setSuggestions([]);
 
@@ -140,6 +206,9 @@ const SeadleGame = () => {
 
     const path = geoPath().projection(projection);
 
+    projectionRef.current = projection;
+    pathRef.current = path;
+
     // Draw ocean
     const ocean = svg.append('circle')
       .attr('cx', width / 2)
@@ -157,7 +226,9 @@ const SeadleGame = () => {
       .attr('stroke-width', 0.5);
 
     // Draw guessed seas
-    const guessedPaths = svg.append('g').attr('class', 'guessed-seas');
+    const guessedPaths = svg.append('g')
+      .attr('class', 'guessed-seas');
+
     guesses.forEach(g => {
       guessedPaths.append('path')
         .datum(g.feature)
@@ -165,7 +236,9 @@ const SeadleGame = () => {
         .attr('fill', g.color)
         .attr('stroke', '#333')
         .attr('stroke-width', 1);
-    });
+    }); 
+
+    guessedPathsRef.current = guessedPaths;
 
     // Draw all seas faintly
     const seaPaths = svg.append('g').attr('class', 'all-seas');
@@ -177,13 +250,17 @@ const SeadleGame = () => {
       .attr('d', path)
       .attr('fill', 'rgba(200, 200, 200, 0.3)')
       .attr('stroke', '#999')
-      .attr('stroke-width', 0.5);
+      .attr('stroke-width', 0.5)
+      .call(addHoverHandlers);
 
     const updatePaths = () => {
       graticulePath.attr('d', path);
-      guessedPaths.selectAll('path').attr('d', path);
+      guessedPathsRef.current
+        .selectAll('path')
+        .attr('d', d => path(d.feature));
       seaPaths.selectAll('.sea').attr('d', path);
     };
+    updatePathsRef.current = updatePaths;
 
     // Add drag to rotate
     const dragd3 = drag()
@@ -206,7 +283,34 @@ const SeadleGame = () => {
 
     svg.call(dragd3);
 
-  }, [seaData, guesses]);
+  }, [seaData]);
+
+  useEffect(() => {
+    if (!updatePathsRef.current) return;
+    updatePathsRef.current();
+  }, [guesses]);
+
+  useEffect(() => {
+    if (!guessedPathsRef.current || !pathRef.current) return;
+
+    const guessedPaths = guessedPathsRef.current;
+    const path = pathRef.current;
+
+    const paths = guessedPaths
+      .selectAll('path')
+      .data(guesses, d => d.name);
+
+    paths.enter()
+      .append('path')
+      .attr('fill', d => d.color)
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .call(addHoverHandlers)
+      .merge(paths)
+      .attr('d', d => path(d.feature));
+
+    paths.exit().remove();
+  }, [guesses]);
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
