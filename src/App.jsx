@@ -26,6 +26,8 @@ const SeadleGame = () => {
   const updatePathsRef = useRef(null);
   const guessedPathsRef = useRef(null);
   const globeBackgroundRef = useRef(null);
+  const pinchStartDistRef = useRef(null);
+  const pinchStartScaleRef = useRef(null);
 
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
@@ -152,6 +154,13 @@ const SeadleGame = () => {
 
     requestAnimationFrame(animate);
     updatePathsRef.current();
+  };
+
+  const getTouchDistance = (touches) => {
+    const [a, b] = touches;
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
   };
 
   // Handle guess submission
@@ -305,6 +314,41 @@ const SeadleGame = () => {
       projection.scale(nextScale);
       updatePathsRef.current();
     });
+
+    // Pinch to zoom on mobile
+    svg
+      .on('touchstart', (event) => {
+        if (event.touches.length === 2) {
+          event.preventDefault();
+
+          pinchStartDistRef.current = getTouchDistance(event.touches);
+          pinchStartScaleRef.current = projection.scale();
+        }
+      })
+      .on('touchmove', (event) => {
+        if (event.touches.length === 2) {
+          event.preventDefault();
+
+          const currentDist = getTouchDistance(event.touches);
+          const scaleFactor = currentDist / pinchStartDistRef.current;
+          
+          const nextScale = pinchStartScaleRef.current * scaleFactor;
+
+          const clampedScale = Math.max(
+            MIN_SCALE,
+            Math.min(MAX_SCALE, nextScale)
+          );
+
+          const smoothedScale = projection.scale() + (clampedScale - projection.scale()) * 0.25;
+
+          projection.scale(smoothedScale);
+          updatePathsRef.current();
+        }
+      })
+      .on('touchend touchcancel', () => {
+        pinchStartDistRef.current = null;
+        pinchStartScaleRef.current = null;
+      });
   }, [seaData]);
 
   useEffect(() => {
@@ -436,7 +480,7 @@ const SeadleGame = () => {
         )}
 
         <div style={{ position: 'relative' }}>
-          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%' }}></svg>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%', touchAction: 'none' }}></svg>
           <Group position="center" spacing="xs">
             <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
             <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
