@@ -26,6 +26,8 @@ const SeadleGame = () => {
   const updatePathsRef = useRef(null);
   const guessedPathsRef = useRef(null);
   const globeBackgroundRef = useRef(null);
+  const pinchStartDistRef = useRef(null);
+  const pinchStartScaleRef = useRef(null);
 
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
@@ -154,6 +156,13 @@ const SeadleGame = () => {
     updatePathsRef.current();
   };
 
+  const getTouchDistance = (touches) => {
+    const [a, b] = touches;
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   // Handle guess submission
   const handleGuess = () => {
     if (!guess.trim() || !seaData || !targetSea || gameWon) return;
@@ -269,7 +278,13 @@ const SeadleGame = () => {
 
     // Add drag to rotate
     const dragd3 = drag()
+      .on('start', (event) => {
+        if (event.sourceEvent?.touches?.length === 2) {
+          event.on('drag', null); // cancel drag
+        }
+      })
       .on('drag', (event) => {
+        if (event.sourceEvent?.touches?.length === 2) return;
         const dx = event.dx;
         const dy = event.dy;
         const currentRotation = projection.rotate();
@@ -305,6 +320,55 @@ const SeadleGame = () => {
       projection.scale(nextScale);
       updatePathsRef.current();
     });
+
+    // Pinch to zoom
+    const touchLayer = svg
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', 'transparent')
+      .style('pointer-events', 'all');
+
+    let lastScale = projection.scale();
+
+    const onTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        pinchStartDistRef.current = getTouchDistance(e.touches);
+        lastScale = projection.scale();
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+
+        const dist = getTouchDistance(e.touches);
+        const factor = dist / pinchStartDistRef.current;
+
+        const next = Math.max(
+          MIN_SCALE,
+          Math.min(MAX_SCALE, lastScale * factor)
+        );
+
+        projection.scale(next);
+        updatePathsRef.current();
+      }
+    };
+
+    const onTouchEnd = () => {
+      pinchStartDistRef.current = null;
+      pinchStartScaleRef.current = null;
+    };
+
+    const touchNode = touchLayer.node();
+
+    touchNode.addEventListener('touchstart', onTouchStart, { passive: false });
+    touchNode.addEventListener('touchmove', onTouchMove, { passive: false });
+    touchNode.addEventListener('touchend', onTouchEnd);
+    touchNode.addEventListener('touchcancel', onTouchEnd);
   }, [seaData]);
 
   useEffect(() => {
@@ -435,8 +499,8 @@ const SeadleGame = () => {
           </Paper>
         )}
 
-        <div style={{ position: 'relative' }}>
-          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%' }}></svg>
+        <div style={{ position: 'relative', touchAction: 'none', overflow: 'hidden' }}>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%', touchAction: 'none', userSelect: 'none' }}></svg>
           <Group position="center" spacing="xs">
             <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
             <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
