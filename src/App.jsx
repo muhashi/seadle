@@ -116,31 +116,6 @@ const SeadleGame = () => {
     requestAnimationFrame(animate);
   };
 
-  const isVisible = (feature) => {
-    const [lon, lat] = geoCentroid(feature);
-    const [cx, cy] = projectionRef.current([lon, lat]);
-    return cx !== null && cy !== null;
-  };
-
-  const addHoverHandlers = (selection) => {
-    selection
-      .style('cursor', 'pointer')
-      .on('mouseenter', function (event, d) {
-        if (!isVisible(d.feature ?? d)) return;
-        select(this)
-          .raise()
-          .attr('stroke', HOVER_STROKE)
-          .attr('stroke-width', HOVER_STROKE_WIDTH)
-          .attr('fill-opacity', HOVER_FILL_OPACITY);
-      })
-      .on('mouseleave', function () {
-        select(this)
-          .attr('stroke', '#999')
-          .attr('stroke-width', 1)
-          .attr('fill-opacity', 1);
-      });
-  };
-
   const showTooltip = (event, data) => {
     const bounds = svgRef.current.getBoundingClientRect();
 
@@ -242,7 +217,7 @@ const SeadleGame = () => {
   useEffect(() => {
     if (!seaData || !svgRef.current) return;
 
-    const width = 600;
+    const width = svgRef.current.clientWidth;
     const height = 600;
 
     select(svgRef.current).selectAll('*').remove();
@@ -463,7 +438,7 @@ const SeadleGame = () => {
         )}
 
         <div style={{ position: 'relative' }}>
-          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)' }}></svg>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%' }}></svg>
           <Group position="center" spacing="xs">
             <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
             <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
