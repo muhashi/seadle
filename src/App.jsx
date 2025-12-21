@@ -30,7 +30,7 @@ const SeadleGame = () => {
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
   const HOVER_FILL_OPACITY = 0.8;
-  const MIN_SCALE = 200;
+  const MIN_SCALE = 150;
   const MAX_SCALE = 2000;
   const ZOOM_STEP = 1.5;
 
@@ -76,12 +76,8 @@ const SeadleGame = () => {
 
   // Get color based on distance
   const getColorForDistance = (distance, maxDistance) => {
-    const ratio = distance / maxDistance;
-    if (ratio < 0.2) return '#0061bd';
-    if (ratio < 0.4) return '#00aaff';
-    if (ratio < 0.6) return '#5ebceb';
-    if (ratio < 0.8) return '#b5e0f5';
-    return '#e1f3fc';
+    const ratio = Math.min(distance / maxDistance, 1);
+    return `rgba(${255 * (1 - ratio)}, ${255 * ratio}, 0, 0.8)`;
   };
 
   const rotateToFeature = (feature, duration = 750) => {
@@ -218,7 +214,7 @@ const SeadleGame = () => {
     if (!seaData || !svgRef.current) return;
 
     const width = svgRef.current.clientWidth;
-    const height = 600;
+    const height = Math.min(600, width);
 
     select(svgRef.current).selectAll('*').remove();
 
@@ -226,8 +222,10 @@ const SeadleGame = () => {
       .attr('width', width)
       .attr('height', height);
 
+    const radius = Math.min(width, height) / 2 * 0.9;
+
     const projection = geoOrthographic()
-      .scale(250)
+      .scale(radius)
       .translate([width / 2, height / 2])
       .rotate([0, 0]);
 
