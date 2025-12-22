@@ -155,6 +155,68 @@ const SeadleGame = () => {
     updatePathsRef.current();
   };
 
+  const addHoverHandler = () => {
+    if (!svgRef.current) return;
+
+    const svg = select(svgRef.current);
+    const guessedByName = new Map(
+      guesses.map(g => [g.name, g])
+    );
+
+    svg.selectAll('.sea')
+      .each(function (d) {
+        const pathSel = select(this);
+        const guess = guessedByName.get(d.properties.NAME);
+
+        // Base styling
+        if (guess) {
+          pathSel
+            .attr('fill', guess.color)
+            .attr('stroke', '#333')
+            .attr('stroke-width', 1);
+        } else {
+          pathSel
+            .attr('fill', '#e0f2ff')
+            .attr('stroke', '#999')
+            .attr('stroke-width', 1);
+        }
+
+        // Shared hover highlight
+        pathSel
+          .style('cursor', 'pointer')
+          .on('mouseenter', function (event) {
+            pathSel
+              .raise()
+              .attr('stroke', HOVER_STROKE)
+              .attr('stroke-width', HOVER_STROKE_WIDTH)
+              .attr('fill-opacity', HOVER_FILL_OPACITY);
+
+            // Tooltip only for guessed seas
+            if (guess) {
+              showTooltip(event, guess);
+            }
+          })
+          .on('mousemove', function (event) {
+            if (!guess) return;
+
+            const bounds = svgRef.current.getBoundingClientRect();
+            setTooltip(t => ({
+              ...t,
+              x: event.clientX - bounds.left + 12,
+              y: event.clientY - bounds.top + 12
+            }));
+          })
+          .on('mouseleave', function () {
+            pathSel
+              .attr('stroke', guess ? '#333' : '#999')
+              .attr('stroke-width', 1)
+              .attr('fill-opacity', 1);
+
+            if (guess) hideTooltip();
+          });
+      });
+  }
+
   // Handle guess submission
   const handleGuess = () => {
     if (!guess.trim() || !seaData || !targetSea || gameWon) return;
@@ -297,68 +359,12 @@ const SeadleGame = () => {
       });
 
     svg.call(zoomBehavior);
+
+    addHoverHandler();
   }, [seaData]);
 
   useEffect(() => {
-    if (!svgRef.current) return;
-
-    const svg = select(svgRef.current);
-    const guessedByName = new Map(
-      guesses.map(g => [g.name, g])
-    );
-
-    svg.selectAll('.sea')
-      .each(function (d) {
-        const pathSel = select(this);
-        const guess = guessedByName.get(d.properties.NAME);
-
-        // Base styling
-        if (guess) {
-          pathSel
-            .attr('fill', guess.color)
-            .attr('stroke', '#333')
-            .attr('stroke-width', 1);
-        } else {
-          pathSel
-            .attr('fill', '#e0f2ff')
-            .attr('stroke', '#999')
-            .attr('stroke-width', 1);
-        }
-
-        // Shared hover highlight
-        pathSel
-          .style('cursor', 'pointer')
-          .on('mouseenter', function (event) {
-            pathSel
-              .raise()
-              .attr('stroke', HOVER_STROKE)
-              .attr('stroke-width', HOVER_STROKE_WIDTH)
-              .attr('fill-opacity', HOVER_FILL_OPACITY);
-
-            // Tooltip only for guessed seas
-            if (guess) {
-              showTooltip(event, guess);
-            }
-          })
-          .on('mousemove', function (event) {
-            if (!guess) return;
-
-            const bounds = svgRef.current.getBoundingClientRect();
-            setTooltip(t => ({
-              ...t,
-              x: event.clientX - bounds.left + 12,
-              y: event.clientY - bounds.top + 12
-            }));
-          })
-          .on('mouseleave', function () {
-            pathSel
-              .attr('stroke', guess ? '#333' : '#999')
-              .attr('stroke-width', 1)
-              .attr('fill-opacity', 1);
-
-            if (guess) hideTooltip();
-          });
-      });
+    addHoverHandler();
   }, [guesses]);
 
   useEffect(() => {
