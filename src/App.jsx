@@ -496,6 +496,7 @@ const SeadleGame = () => {
           <div style={{ position: 'relative' }}>
               <SeaForm
                 onSubmit={handleGuess}
+                guessedSeas={guesses}
               />
           </div>
         )}

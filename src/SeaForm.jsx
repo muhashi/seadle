@@ -4,14 +4,14 @@ import { Select, Button, Group } from '@mantine/core';
 
 import wordlist from './data/wordlist.json';
 
-function SeaForm({ onSubmit }) {
+function SeaForm({ onSubmit, guessedSeas }) {
   const [sea, setSea] = useState('');
 
   return (
     <form style={{ width: '100%' }} onSubmit={(e) => { e.preventDefault(); onSubmit(sea); setSea(null);}}>
       <Group style={{ width: '100%' }} spacing="sm" noWrap justify="center">
         <Select
-          data={[...wordlist].sort((a, b) => a.localeCompare(b))}
+          data={[...wordlist].filter(sea => !guessedSeas.some(({name}) => sea === name)).sort((a, b) => a.localeCompare(b))}
           autoSelectOnBlur
           searchable
           clearable
