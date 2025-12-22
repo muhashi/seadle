@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
+import { Stack, Text, Paper, Group, Badge } from '@mantine/core';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
@@ -34,9 +34,6 @@ const SeadleGame = () => {
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
   const HOVER_FILL_OPACITY = 0.8;
-  const MIN_SCALE = 150;
-  const MAX_SCALE = 2000;
-  const ZOOM_STEP = 1.5;
   const MAX_TILT = 80;
 
   const getDayNumber = () => {
