@@ -75,10 +75,15 @@ const SeadleGame = () => {
     return geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
   };
 
-  // Get color based on distance
   const getColorForDistance = (distance, maxDistance) => {
     const ratio = Math.min(distance / maxDistance, 1);
-    return `rgba(${255 * (1 - ratio)}, ${255 * ratio}, 0, 0.8)`;
+
+    const exponentialRatio = 1 - Math.pow(1 - ratio, 3);
+
+    const r = Math.round(173 + (13 - 173) * (1 - exponentialRatio));
+    const g = Math.round(216 + (75 - 216) * (1 - exponentialRatio));
+    const b = Math.round(230 + (145 - 230) * (1 - exponentialRatio));
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
   const rotateToFeature = (feature, duration = 750) => {
