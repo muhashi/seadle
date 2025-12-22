@@ -434,8 +434,9 @@ const SeadleGame = () => {
     svg
       .style('touch-action', 'none')
       .call(zoomBehavior)
-      .call(zoomBehavior.transform, zoomIdentity.scale(1));
-    
+      .call(zoomBehavior.transform, zoomIdentity.scale(1))
+      .on('dblclick.zoom', null);
+
     addHoverHandler();
   }, [seaData]);
 
