@@ -5,6 +5,7 @@ import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
+import wordlist from './data/wordlist.json';
 
 const SeadleGame = () => {
   const svgRef = useRef();
@@ -35,33 +36,41 @@ const SeadleGame = () => {
   const MAX_SCALE = 2000;
   const ZOOM_STEP = 1.5;
 
+  const getDayNumber = () => {
+    const epoch = new Date(2022, 4, 9); // Created on 9th May 2022!
+    const today = new Date();
+    today.setHours(0, 0, 0); // Make sure both dates are on same time of 00:00:00
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const dayNumber = Math.round((today.getTime() - epoch.getTime()) / msPerDay);
+    return dayNumber;
+  };
+
   // Load data
   useEffect(() => {
     const geojson = topojson.feature(SeaRegionsJSON, SeaRegionsJSON.objects.seas);
     setSeaData(geojson);
 
-    // Pick a random sea for today
-    const seas = geojson.features;
-    const today = new Date().toDateString();
-    const savedGame = localStorage.getItem(`seadle-${today}`);
+    const savedGame = localStorage.getItem(`seadle-${getDayNumber()}`);
     
     if (savedGame) {
       const saved = JSON.parse(savedGame);
-      setTargetSea(saved.targetSea);
       setGuesses(saved.guesses);
       setGameWon(saved.gameWon);
     } else {
-      const randomSea = seas[Math.floor(Math.random() * seas.length)];
-      setTargetSea(randomSea);
+      const todaysSeaName = wordlist[getDayNumber() % wordlist.length]
+      const todaysSeaData = geojson.features.find(
+        f => f.properties.NAME.toLowerCase() === todaysSeaName.toLowerCase()
+      );
+      console.log('Today\'s sea is:', todaysSeaName);
+      console.log(todaysSeaData);
+      setTargetSea(todaysSeaData);
     }
   }, []);
 
   // Save game state
   useEffect(() => {
     if (targetSea) {
-      const today = new Date().toDateString();
-      localStorage.setItem(`seadle-${today}`, JSON.stringify({
-        targetSea,
+      localStorage.setItem(`seadle-${getDayNumber()}`, JSON.stringify({
         guesses,
         gameWon
       }));
