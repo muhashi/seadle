@@ -26,6 +26,7 @@ const SeadleGame = () => {
   const updatePathsRef = useRef(null);
   const guessedPathsRef = useRef(null);
   const globeBackgroundRef = useRef(null);
+  const isDraggingRef = useRef(false);
 
   const HOVER_STROKE = '#000';
   const HOVER_STROKE_WIDTH = 2;
@@ -345,6 +346,9 @@ const SeadleGame = () => {
         return true;
       })
       .on('start', (event) => {
+        isDraggingRef.current = true;
+        hideTooltip();
+
         // Track if this is a zoom gesture (2+ touches) or drag (1 touch)
         if (event.sourceEvent?.touches?.length > 1) {
           svg.classed('zooming', true);
@@ -407,12 +411,17 @@ const SeadleGame = () => {
       .on('end', () => {
         lastX = null;
         lastY = null;
+        // Small delay to prevent tooltip from showing immediately after drag
+        setTimeout(() => {
+          isDraggingRef.current = false;
+        }, 50);
       });
 
     svg
       .style('touch-action', 'none')
       .call(zoomBehavior)
       .call(zoomBehavior.transform, zoomIdentity.scale(1));
+    
     addHoverHandler();
   }, [seaData]);
 
