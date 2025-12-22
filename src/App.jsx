@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
-import { drag } from 'd3-drag';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
@@ -330,45 +329,90 @@ const SeadleGame = () => {
     };
     updatePathsRef.current = updatePaths;
 
-    // Add drag to rotate
-    const dragd3 = drag()
-      .filter((event) => {
-        if (event.type.startsWith('touch')) {
-          return event.touches?.length === 1;
-        }
-        return !event.button;
-      })
-      .on('drag', (event) => {
-        const dx = event.dx;
-        const dy = event.dy;
-        const currentRotation = projection.rotate();
-        const radius = projection.scale();
-        const scale = 360 / (2 * Math.PI * radius);
+    // Track previous position for drag
+    let lastX = null;
+    let lastY = null;
 
-        const newRotation = [
-          currentRotation[0] + dx * scale,
-          currentRotation[1] - dy * scale,
-          currentRotation[2]
-        ];
-
-        projection.rotate(newRotation);
-        updatePaths();
-      });
-
-    svg.call(dragd3);
-
+    // Combined zoom and drag behavior
     const zoomBehavior = zoom()
       .scaleExtent([0.5, 8])
+      .filter((event) => {
+        // Allow all zoom events (including pinch)
+        if (event.type === 'wheel') return true;
+        if (event.type.startsWith('touch')) return true;
+        // Allow mouse drag only with primary button
+        if (event.type.startsWith('mouse')) return !event.button;
+        return true;
+      })
+      .on('start', (event) => {
+        // Track if this is a zoom gesture (2+ touches) or drag (1 touch)
+        if (event.sourceEvent?.touches?.length > 1) {
+          svg.classed('zooming', true);
+          lastX = null;
+          lastY = null;
+        } else {
+          svg.classed('zooming', false);
+          // Initialize position tracking
+          if (event.sourceEvent?.touches?.[0]) {
+            lastX = event.sourceEvent.touches[0].clientX;
+            lastY = event.sourceEvent.touches[0].clientY;
+          } else if (event.sourceEvent) {
+            lastX = event.sourceEvent.clientX;
+            lastY = event.sourceEvent.clientY;
+          }
+        }
+      })
       .on('zoom', (event) => {
-        projection.scale(radius * event.transform.k);
-        updatePathsRef.current();
+        const transform = event.transform;
+        
+        // Handle zoom (scale changes)
+        if (event.sourceEvent?.touches?.length > 1 || event.sourceEvent?.type === 'wheel' || svg.classed('zooming')) {
+          projection.scale(radius * transform.k);
+          updatePathsRef.current();
+        } 
+        // Handle drag (rotation) for single touch or mouse
+        else if (event.sourceEvent) {
+          let currentX, currentY;
+          
+          if (event.sourceEvent.touches?.[0]) {
+            currentX = event.sourceEvent.touches[0].clientX;
+            currentY = event.sourceEvent.touches[0].clientY;
+          } else {
+            currentX = event.sourceEvent.clientX;
+            currentY = event.sourceEvent.clientY;
+          }
+          
+          if (lastX !== null && lastY !== null) {
+            const dx = currentX - lastX;
+            const dy = currentY - lastY;
+            
+            const currentRotation = projection.rotate();
+            const currentRadius = projection.scale();
+            const scale = 360 / (2 * Math.PI * currentRadius);
+
+            const newRotation = [
+              currentRotation[0] + dx * scale,
+              currentRotation[1] - dy * scale,
+              currentRotation[2]
+            ];
+
+            projection.rotate(newRotation);
+            updatePaths();
+          }
+          
+          lastX = currentX;
+          lastY = currentY;
+        }
+      })
+      .on('end', () => {
+        lastX = null;
+        lastY = null;
       });
 
     svg
       .style('touch-action', 'none')
       .call(zoomBehavior)
       .call(zoomBehavior.transform, zoomIdentity.scale(1));
-
     addHoverHandler();
   }, [seaData]);
 
