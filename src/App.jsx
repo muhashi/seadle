@@ -37,7 +37,7 @@ const SeadleGame = () => {
   const ZOOM_STEP = 1.5;
 
   const getDayNumber = () => {
-    const epoch = new Date(2022, 4, 9); // Created on 9th May 2022!
+    const epoch = new Date(2025, 11, 22); // Created on 12th Dec 2025!
     const today = new Date();
     today.setHours(0, 0, 0); // Make sure both dates are on same time of 00:00:00
     const msPerDay = 1000 * 60 * 60 * 24;
