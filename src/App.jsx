@@ -3,6 +3,7 @@ import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/co
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { drag } from 'd3-drag';
 import { select } from 'd3-selection';
+import { zoom } from 'd3-zoom';
 import * as topojson from 'topojson-client';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 
@@ -288,23 +289,14 @@ const SeadleGame = () => {
 
     svg.call(dragd3);
 
-    svg.on('wheel', (event) => {
-      event.preventDefault();
+    const zoomBehavior = zoom()
+      .scaleExtent([MIN_SCALE, MAX_SCALE])
+      .on('zoom', (event) => {
+        projection.scale(event.transform.k);
+        updatePathsRef.current();
+      });
 
-      const projection = projectionRef.current;
-      if (!projection) return;
-
-      const currentScale = projection.scale();
-      const delta = -event.deltaY * 0.5;
-
-      const nextScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, currentScale + delta)
-      );
-
-      projection.scale(nextScale);
-      updatePathsRef.current();
-    });
+    svg.call(zoomBehavior);
   }, [seaData]);
 
   useEffect(() => {
@@ -472,7 +464,7 @@ const SeadleGame = () => {
                 placeholder="Enter sea name..."
                 value={guess}
                 onChange={(e) => handleInputChange(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleGuess()}
+                onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
                 style={{ flex: 1 }}
               />
               <Button onClick={handleGuess}>Guess</Button>
