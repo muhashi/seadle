@@ -8,6 +8,20 @@ import * as topojson from 'topojson-client';
 import SeaForm from './SeaForm.jsx';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 import wordlist from './data/wordlist.json';
+import './App.css';
+
+const Header = () => (
+  <header style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <Group justify="center" spacing="xs" style={{ marginBottom: '8px' }}>
+      <Text component="h1" size="3rem" style={{ marginBottom: '8px', color: '#002a4a', fontFamily: 'Comic Sans MS, Comic Sans, Chalkboard SE, Chalkboard, Arial', fontWeight: 'bold', userSelect: 'none' }}>
+        <div className="bounce-text"><span>S</span><span>e</span><span>a</span><span>d</span><span>l</span><span>e</span></div>
+      </Text>
+    </Group>
+    <Text component="p" size="md" c="dimmed">
+      Guess the sea of the day!
+    </Text>
+  </header>
+);
 
 const SeadleGame = () => {
   const svgRef = useRef();
@@ -460,6 +474,7 @@ const SeadleGame = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <Header />
       <Stack spacing="md">
         {gameWon && (
           <Paper p="md" style={{ background: '#d4edda', border: '1px solid #c3e6cb' }}>
