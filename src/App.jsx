@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Stack, Text, Paper, Group, Badge } from '@mantine/core';
+import { Alert, Stack, Text, Paper, Group, Badge } from '@mantine/core';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
+import ConfettiExplosion from 'react-confetti-blast';
 
 import SeaForm from './SeaForm.jsx';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
@@ -477,11 +478,18 @@ const SeadleGame = () => {
       <Header />
       <Stack spacing="md">
         {gameWon && (
-          <Paper p="md" style={{ background: '#d4edda', border: '1px solid #c3e6cb' }}>
-            <Text weight={700} c="green" align="center">
+          <>
+            <ConfettiExplosion
+              style={{
+                position: 'absolute', top: '50vh', left: '50vw',
+              }}
+              duration={3000}
+              force={0.6}
+            />
+            <Alert variant="light" color="green" styles={{ message: { color: '#194d03' } }}>
               🎉 Congratulations! You found {targetSea.properties.NAME} in {guesses.length} guesses!
-            </Text>
-          </Paper>
+            </Alert>
+          </>
         )}
 
         {!gameWon && (
