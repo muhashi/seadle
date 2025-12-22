@@ -37,8 +37,6 @@ const SeadleGame = () => {
     content: null
   });
 
-  console.log('Target sea:', targetSea);
-
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
   const updatePathsRef = useRef(null);
@@ -209,6 +207,7 @@ const SeadleGame = () => {
             if (!guess) return;
 
             const bounds = svgRef.current.getBoundingClientRect();
+            showTooltip(event, guess);
             setTooltip(t => ({
               ...t,
               x: event.clientX - bounds.left + 12,
