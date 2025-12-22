@@ -3,7 +3,7 @@ import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/co
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { drag } from 'd3-drag';
 import { select } from 'd3-selection';
-import { zoom } from 'd3-zoom';
+import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 
@@ -332,6 +332,12 @@ const SeadleGame = () => {
 
     // Add drag to rotate
     const dragd3 = drag()
+      .filter((event) => {
+        if (event.type.startsWith('touch')) {
+          return event.touches?.length === 1;
+        }
+        return !event.button;
+      })
       .on('drag', (event) => {
         const dx = event.dx;
         const dy = event.dy;
@@ -352,13 +358,16 @@ const SeadleGame = () => {
     svg.call(dragd3);
 
     const zoomBehavior = zoom()
-      .scaleExtent([MIN_SCALE, MAX_SCALE])
+      .scaleExtent([0.5, 8])
       .on('zoom', (event) => {
-        projection.scale(event.transform.k);
+        projection.scale(radius * event.transform.k);
         updatePathsRef.current();
       });
 
-    svg.call(zoomBehavior);
+    svg
+      .style('touch-action', 'none')
+      .call(zoomBehavior)
+      .call(zoomBehavior.transform, zoomIdentity.scale(1));
 
     addHoverHandler();
   }, [seaData]);
@@ -434,7 +443,7 @@ const SeadleGame = () => {
         )}
 
         <div style={{ position: 'relative' }}>
-          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%' }}></svg>
+          <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%', userSelect: 'none', WebkitUserSelect: 'none', touchAction: 'none' }}></svg>
           <Group position="center" spacing="xs">
             <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
             <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
@@ -449,6 +458,7 @@ const SeadleGame = () => {
                 left: tooltip.x,
                 top: tooltip.y,
                 pointerEvents: 'none',
+                touchAction: 'none',
                 zIndex: 10,
                 background: 'rgba(255, 255, 255, 0.95)'
               }}
