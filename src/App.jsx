@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TextInput, Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
+import { Button, Stack, Text, Paper, Group, Badge } from '@mantine/core';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
+
+import SeaForm from './SeaForm.jsx';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 import wordlist from './data/wordlist.json';
 
@@ -21,6 +23,8 @@ const SeadleGame = () => {
     y: 0,
     content: null
   });
+
+  console.log('Target sea:', targetSea);
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
@@ -57,15 +61,14 @@ const SeadleGame = () => {
       const saved = JSON.parse(savedGame);
       setGuesses(saved.guesses);
       setGameWon(saved.gameWon);
-    } else {
-      const todaysSeaName = wordlist[getDayNumber() % wordlist.length]
-      const todaysSeaData = geojson.features.find(
-        f => f.properties.NAME.toLowerCase() === todaysSeaName.toLowerCase()
-      );
-      console.log('Today\'s sea is:', todaysSeaName);
-      console.log(todaysSeaData);
-      setTargetSea(todaysSeaData);
     }
+    const todaysSeaName = wordlist[getDayNumber() % wordlist.length]
+    const todaysSeaData = geojson.features.find(
+      f => f.properties.NAME.toLowerCase() === todaysSeaName.toLowerCase()
+    );
+    console.log('Today\'s sea is:', todaysSeaName);
+    console.log(todaysSeaData);
+    setTargetSea(todaysSeaData);
   }, []);
 
   // Save game state
@@ -143,33 +146,6 @@ const SeadleGame = () => {
     setTooltip(t => ({ ...t, visible: false }));
   };
 
-  const zoomBy = (delta) => {
-    const projection = projectionRef.current;
-    if (!projection) return;
-
-    const nextScale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, projection.scale() * delta)
-    );
-
-    const startScale = projection.scale();
-    const start = performance.now();
-    const duration = 200;
-
-    const animate = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = t * t * (3 - 2 * t);
-
-      projection.scale(startScale + (nextScale - startScale) * eased);
-      updatePathsRef.current();
-
-      if (t < 1) requestAnimationFrame(animate);
-    };
-
-    requestAnimationFrame(animate);
-    updatePathsRef.current();
-  };
-
   const clampRotation = (rotation) => {
     return [
       rotation[0],
@@ -241,12 +217,13 @@ const SeadleGame = () => {
   }
 
   // Handle guess submission
-  const handleGuess = () => {
-    if (!guess.trim() || !seaData || !targetSea || gameWon) return;
+  const handleGuess = (guessedSeaName) => {
+    if (!guessedSeaName.trim() || !seaData || !targetSea || gameWon) return;
 
     const guessedSea = seaData.features.find(
-      f => f.properties.NAME.toLowerCase() === guess.toLowerCase()
+      f => f.properties.NAME.toLowerCase() === guessedSeaName.toLowerCase()
     );
+
 
     if (!guessedSea) {
       alert('Sea not found. Please enter a valid sea name.');
@@ -275,23 +252,6 @@ const SeadleGame = () => {
 
     if (guessedSea.properties.NAME === targetSea.properties.NAME) {
       setGameWon(true);
-    }
-  };
-
-  // Handle input change with autocomplete
-  const handleInputChange = (value) => {
-    setGuess(value);
-    if (value.length > 0 && seaData) {
-      const filtered = seaData.features
-        .filter(f => 
-          f.properties.NAME.toLowerCase().includes(value.toLowerCase()) &&
-          !guesses.find(g => g.name === f.properties.NAME)
-        )
-        .map(f => f.properties.NAME)
-        .slice(0, 5);
-      setSuggestions(filtered);
-    } else {
-      setSuggestions([]);
     }
   };
 
@@ -508,23 +468,24 @@ const SeadleGame = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <Stack spacing="md">
-        <Text size="xl" weight={700} align="center">🌊 Seadle</Text>
-        <Text align="center" color="dimmed">Guess the sea of the day!</Text>
-
         {gameWon && (
           <Paper p="md" style={{ background: '#d4edda', border: '1px solid #c3e6cb' }}>
-            <Text weight={700} color="green" align="center">
+            <Text weight={700} c="green" align="center">
               🎉 Congratulations! You found {targetSea.properties.NAME} in {guesses.length} guesses!
             </Text>
           </Paper>
         )}
 
+        {!gameWon && (
+          <div style={{ position: 'relative' }}>
+              <SeaForm
+                onSubmit={handleGuess}
+              />
+          </div>
+        )}
+
         <div style={{ position: 'relative' }}>
           <svg ref={svgRef} style={{ border: '1px solid #ddd', borderRadius: '8px', background: 'radial-gradient(circle,#57C1EB 40%, #246FA8 100%)', width: '100%', userSelect: 'none', WebkitUserSelect: 'none', touchAction: 'none' }}></svg>
-          <Group position="center" spacing="xs">
-            <Button size="xs" onClick={() => zoomBy(ZOOM_STEP)}>+</Button>
-            <Button size="xs" onClick={() => zoomBy(1/ZOOM_STEP)}>-</Button>
-          </Group>
           {tooltip.visible && tooltip.content && (
             <Paper
               shadow="md"
@@ -543,45 +504,12 @@ const SeadleGame = () => {
               <Text size="sm" weight={600}>
                 {tooltip.content.name}
               </Text>
-              <Text size="xs" color="dimmed">
+              <Text size="xs" c="dimmed">
                 {Math.round(tooltip.content.distance)} km away
               </Text>
             </Paper>
           )}
         </div>
-
-        {!gameWon && (
-          <div style={{ position: 'relative' }}>
-            <Group>
-              <TextInput
-                placeholder="Enter sea name..."
-                value={guess}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
-                style={{ flex: 1 }}
-              />
-              <Button onClick={handleGuess}>Guess</Button>
-            </Group>
-            {suggestions.length > 0 && (
-              <Paper shadow="sm" p="xs" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10 }}>
-                <Stack spacing={4}>
-                  {suggestions.map(s => (
-                    <Text
-                      key={s}
-                      style={{ cursor: 'pointer', padding: '4px 8px' }}
-                      onClick={() => {
-                        setGuess(s);
-                        setSuggestions([]);
-                      }}
-                    >
-                      {s}
-                    </Text>
-                  ))}
-                </Stack>
-              </Paper>
-            )}
-          </div>
-        )}
 
         <Paper p="md" withBorder>
           <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
