@@ -35,6 +35,7 @@ const SeadleGame = () => {
   const MIN_SCALE = 150;
   const MAX_SCALE = 2000;
   const ZOOM_STEP = 1.5;
+  const MAX_TILT = 80;
 
   const getDayNumber = () => {
     const epoch = new Date(2025, 11, 22); // Created on 12th Dec 2025!
@@ -113,11 +114,11 @@ const SeadleGame = () => {
     const animate = (now) => {
       const t = Math.min(1, (now - start) / duration);
 
-      projection.rotate([
+      projection.rotate(clampRotation([
         interpolate(currentRotation[0], targetRotation[0], t),
         interpolate(currentRotation[1], targetRotation[1], t),
         0
-      ]);
+      ]));
 
       updatePaths();
 
@@ -167,6 +168,14 @@ const SeadleGame = () => {
 
     requestAnimationFrame(animate);
     updatePathsRef.current();
+  };
+
+  const clampRotation = (rotation) => {
+    return [
+      rotation[0],
+      Math.max(-MAX_TILT, Math.min(MAX_TILT, rotation[1])),
+      rotation[2] ?? 0
+    ];
   };
 
   const addHoverHandler = () => {
@@ -414,7 +423,7 @@ const SeadleGame = () => {
               currentRotation[2]
             ];
 
-            projection.rotate(newRotation);
+            projection.rotate(clampRotation(newRotation));
             updatePaths();
           }
           
