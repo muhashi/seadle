@@ -11,12 +11,10 @@ import wordlist from './data/wordlist.json';
 
 const SeadleGame = () => {
   const svgRef = useRef();
-  const [guess, setGuess] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [gameWon, setGameWon] = useState(false);
   const [seaData, setSeaData] = useState(null);
   const [targetSea, setTargetSea] = useState(null);
-  const [suggestions, setSuggestions] = useState([]);
   const [tooltip, setTooltip] = useState({
     visible: false,
     x: 0,
@@ -247,8 +245,6 @@ const SeadleGame = () => {
 
     setGuesses([...guesses, newGuess]);
     rotateToFeature(guessedSea);
-    setGuess('');
-    setSuggestions([]);
 
     if (guessedSea.properties.NAME === targetSea.properties.NAME) {
       setGameWon(true);
