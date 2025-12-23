@@ -1,25 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
+import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon } from '@mantine/core';
+import { useMediaQuery, useDisclosure } from '@mantine/hooks';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import * as topojson from 'topojson-client';
 import ConfettiExplosion from 'react-confetti-blast';
-import { IconCoffee } from '@tabler/icons-react';
+import { IconCoffee, IconHelp } from '@tabler/icons-react';
 
 import SeaForm from './SeaForm.jsx';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 import wordlist from './data/wordlist.json';
 import './App.css';
 
+const Help = () => {
+  const [opened, { open, close }] = useDisclosure(false);
+
+  return (
+    <>
+      <Modal opened={opened} onClose={close} title="How to Play" centered>
+        <Text mb="md">
+          Guess the sea of the day in as few attempts as possible! Use the search box to find and select a sea.
+        </Text>
+        <Text mb="md">
+          After making a guess, the sea will be highlighted on the globe. The darker the colour, the closer your guess is to the target sea.
+        </Text>
+        <Text mb="md">
+          You can drag the globe to rotate it and zoom in/out using pinch or scroll. Hover over your guessed seas to see their names and distances from the target sea.
+        </Text>
+      </Modal>
+
+      <ActionIcon variant="transparent" c="#002a4a" onClick={open}>
+        <IconHelp />
+      </ActionIcon>
+    </>
+  );
+};
+
 const Header = () => {
   const isMobile = useMediaQuery(`(max-width: 485px)`);
 
   return (<header style={{ textAlign: 'center', marginBottom: '20px' }}>
     <Grid justify="center" align="center">
-      {!isMobile && <Grid.Col span={1}></Grid.Col>}
-      <Grid.Col span={isMobile ? 11 : 10}>
+      <Grid.Col span={1}>
+        <Anchor style={{ marginLeft: 'auto' }} href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee">
+          <IconCoffee color="#002a4a" />
+        </Anchor>
+      </Grid.Col>
+      <Grid.Col span={10}>
         <Group justify="center" spacing="xs" style={{ marginBottom: '8px' }}>
           <Text style={{visibility: 'hidden', display: isMobile ? 'none' : 'block'}}>by muhashi</Text>
           <Text
@@ -36,9 +64,7 @@ const Header = () => {
         </Group>
       </Grid.Col>
       <Grid.Col span={1}>
-        <Anchor style={{ marginLeft: 'auto' }} href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee">
-          <IconCoffee color="#002a4a" />
-        </Anchor>
+        <Help />
       </Grid.Col>
     </Grid>
     <Text component="p" size="md" c="dimmed">
