@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon, Switch, Button } from '@mantine/core';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
@@ -102,9 +102,17 @@ const ShareButton = ({ dayNumber, guesses }) => {
   );
 };
 
+const getDayNumber = () => {
+  const epoch = new Date(2025, 11, 22); // Created on 12th Dec 2025!
+  const today = new Date();
+  today.setHours(0, 0, 0); // Make sure both dates are on same time of 00:00:00
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const dayNumber = Math.round((today.getTime() - epoch.getTime()) / msPerDay);
+  return dayNumber;
+};
+
 const SeadleGame = () => {
   const svgRef = useRef();
-  const [guesses, setGuesses] = useState([]);
   const [gameWon, setGameWon] = useState(false);
   const [seaData, setSeaData] = useState(null);
   const [targetSeaNeighbours, setTargetSeaNeighbours] = useState(null);
@@ -123,6 +131,12 @@ const SeadleGame = () => {
     const stored = localStorage.getItem('displayAllNames');
     return stored === null ? false : stored === 'true';
   });
+  const [guessedNames, setGuessedNames] = useState(() => {
+    const stored = localStorage.getItem(`seadle-${getDayNumber()}`);
+    const storedJSON = stored ? JSON.parse(stored) : null;
+
+    return storedJSON?.guesses ? storedJSON.guesses : [];
+  });
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
@@ -135,15 +149,50 @@ const SeadleGame = () => {
   const HOVER_STROKE_WIDTH = 2;
   const HOVER_FILL_OPACITY = 0.8;
   const MAX_TILT = 80;
+  const MAX_DISTANCE = 20000; // Max possible distance on Earth
 
-  const getDayNumber = () => {
-    const epoch = new Date(2025, 11, 22); // Created on 12th Dec 2025!
-    const today = new Date();
-    today.setHours(0, 0, 0); // Make sure both dates are on same time of 00:00:00
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const dayNumber = Math.round((today.getTime() - epoch.getTime()) / msPerDay);
-    return dayNumber;
+  const getColorForDistance = (distance, maxDistance) => {
+    const ratio = Math.min(distance / maxDistance, 1);
+
+    const exponentialRatio = 1 - Math.pow(1 - ratio, 3);
+
+    const r = Math.round(173 + (13 - 173) * (1 - exponentialRatio));
+    const g = Math.round(216 + (75 - 216) * (1 - exponentialRatio));
+    const b = Math.round(230 + (145 - 230) * (1 - exponentialRatio));
+    return `rgb(${r}, ${g}, ${b})`;
   };
+
+  // Calculate distance between two geographic features
+  const calculateDistance = (feature1, feature2) => {
+    const centroid1 = geoCentroid(feature1);
+    const centroid2 = geoCentroid(feature2);
+    return geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
+  };
+
+  const isNeighbour = (name) => targetSeaNeighbours && targetSeaNeighbours.includes(name);
+  const guessedColor = (feature) => isNeighbour(feature.properties.NAME) ? '#f04e2e' : (feature.properties.NAME === targetSea.properties.NAME ? '#219900' : getColorForDistance(calculateDistance(feature, targetSea), MAX_DISTANCE));
+
+  const guesses = useMemo(() => {
+    if (!seaData) return [];
+
+    return guessedNames
+      .map(name => {
+        const feature = seaData.features.find(
+          f => f.properties.NAME === name
+        );
+
+        if (!feature) return null;
+
+        return {
+          name,
+          feature,
+          isNeighbour: isNeighbour(name),
+          distance: calculateDistance(feature, targetSea),
+          color: guessedColor(feature)
+        };
+      })
+      .filter(Boolean);
+  }, [guessedNames, seaData]);
 
   // Load data
   useEffect(() => {
@@ -154,7 +203,7 @@ const SeadleGame = () => {
     
     if (savedGame) {
       const saved = JSON.parse(savedGame);
-      setGuesses(saved.guesses);
+      // setGuesses(saved.guesses);
       setGameWon(saved.gameWon);
     }
     const todaysSeaName = wordlist[getDayNumber() % wordlist.length]
@@ -171,35 +220,17 @@ const SeadleGame = () => {
 
   // Save game state
   useEffect(() => {
-    if (targetSea) {
+    if (guessedNames && guessedNames.length > 0) {
       localStorage.setItem(`seadle-${getDayNumber()}`, JSON.stringify({
-        guesses,
+        guesses: guesses.map(({name}) => name),
         gameWon
       }));
     }
-  }, [guesses, gameWon, targetSea]);
-
-  // Calculate distance between two geographic features
-  const calculateDistance = (feature1, feature2) => {
-    const centroid1 = geoCentroid(feature1);
-    const centroid2 = geoCentroid(feature2);
-    return geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
-  };
+  }, [guessedNames, gameWon, targetSea]);
 
   const getDistanceText = (distanceKm) => {
     return `${Math.round(distanceFormatKm ? distanceKm : distanceKm * 0.621371)} ${distanceFormatKm ? 'km' : 'miles'}`;
   }
-
-  const getColorForDistance = (distance, maxDistance) => {
-    const ratio = Math.min(distance / maxDistance, 1);
-
-    const exponentialRatio = 1 - Math.pow(1 - ratio, 3);
-
-    const r = Math.round(173 + (13 - 173) * (1 - exponentialRatio));
-    const g = Math.round(216 + (75 - 216) * (1 - exponentialRatio));
-    const b = Math.round(230 + (145 - 230) * (1 - exponentialRatio));
-    return `rgb(${r}, ${g}, ${b})`;
-  };
 
   const rotateToFeature = (feature, duration = 750) => {
     if (!projectionRef.current || !updatePathsRef.current) return;
@@ -335,31 +366,19 @@ const SeadleGame = () => {
     );
 
     if (!guessedSea) {
-      alert('Sea not found. Please enter a valid sea name.');
       return;
     }
 
     if (guesses.find(g => g.name === guessedSea.properties.NAME)) {
-      alert('You already guessed this sea!');
       return;
     }
 
-    const distance = calculateDistance(guessedSea, targetSea);
-    const maxDistance = 20000; // Max possible distance on Earth
+    setGuessedNames(prev => {
+      if (prev.includes(guessedSea.properties.NAME)) return prev;
 
-    const isNeighbour = targetSeaNeighbours && targetSeaNeighbours.includes(guessedSea.properties.NAME);
-
-    const color = isNeighbour ? '#f04e2e' : (guessedSeaName === targetSea.properties.NAME ? '#219900' : getColorForDistance(distance, maxDistance));
-
-    const newGuess = {
-      name: guessedSea.properties.NAME,
-      distance,
-      color,
-      feature: guessedSea,
-      isNeighbour,
-    };
-
-    setGuesses([...guesses, newGuess]);
+      const next = [...prev, guessedSea.properties.NAME];
+      return next;
+    });
     rotateToFeature(guessedSea);
 
     if (guessedSea.properties.NAME === targetSea.properties.NAME) {
