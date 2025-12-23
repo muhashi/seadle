@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon } from '@mantine/core';
+import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon, Switch } from '@mantine/core';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
@@ -86,6 +86,7 @@ const SeadleGame = () => {
     y: 0,
     content: null
   });
+  const [distanceFormatKm, setDistanceFormatKm] = useState(localStorage.getItem('distanceFormatKm') === 'true' || false);
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
@@ -148,6 +149,10 @@ const SeadleGame = () => {
     const centroid2 = geoCentroid(feature2);
     return geoDistance(centroid1, centroid2) * 6371; // Earth radius in km
   };
+
+  const getDistanceText = (distanceKm) => {
+    return `${Math.round(distanceFormatKm ? distanceKm : distanceKm * 0.621371)} ${distanceFormatKm ? 'km' : 'miles'}`;
+  }
 
   const getColorForDistance = (distance, maxDistance) => {
     const ratio = Math.min(distance / maxDistance, 1);
@@ -578,7 +583,7 @@ const SeadleGame = () => {
                 {tooltip.content.name}
               </Text>
               <Text size="xs" c="dimmed">
-                {tooltip.content.isNeighbour ? `Borders (${Math.round(tooltip.content.distance)} km away)` : `${Math.round(tooltip.content.distance)} km away`}
+                {tooltip.content.isNeighbour ? `Borders (${getDistanceText(tooltip.content.distance)} away)` : `${getDistanceText(tooltip.content.distance)} away`}
               </Text>
             </Paper>
           )}
@@ -586,7 +591,16 @@ const SeadleGame = () => {
 
         { guesses.length > 0 &&
           <Paper p="md" withBorder>
-            <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
+            <Group justify="space-between" mb="sm">
+              <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
+              <Switch
+                checked={distanceFormatKm}
+                onChange={(event) => {setDistanceFormatKm(event.currentTarget.checked); localStorage.setItem('distanceFormatKm', event.currentTarget.checked);}}
+                label={distanceFormatKm ? "Distance in Kilometers" : "Distance in Miles"}
+                labelPosition="left"
+                size="md"
+              />
+            </Group>
             <Group gap="xl">
               {guesses.toSorted((a, b) => a.distance - b.distance).map((g, i) => (
                 <Group key={i} position="apart">
@@ -601,7 +615,7 @@ const SeadleGame = () => {
                       border: '1px solid #333',
                       borderRadius: '4px'
                     }}></div>
-                    <Text size="sm">{g.isNeighbour ? `Borders (${Math.round(g.distance)} km)` : `${Math.round(g.distance)} km`}</Text>
+                    <Text size="sm">{g.isNeighbour ? `Borders (${getDistanceText(g.distance)})` : `${getDistanceText(g.distance)}`}</Text>
                   </Group>
                 </Group>
               ))}
