@@ -20,10 +20,10 @@ const Help = () => {
     <>
       <Modal opened={opened} onClose={close} title="How to Play" centered>
         <Text mb="md">
-          Guess the sea of the day in as few attempts as possible! Use the search box to find and select a sea.
+          Guess the <span style={{color: '#002a4a', fontWeight: 'bold'}}>sea of the day</span> in as few attempts as possible! Use the search box to find and select a sea.
         </Text>
         <Text mb="md">
-          After making a guess, the sea will be highlighted on the globe. The darker the colour, the closer your guess is to the target sea.
+          After making a guess, the sea will be <span style={{color: '#002a4a', fontWeight: 'bold'}}>highlighted on the globe</span>. The darker the colour, the closer your guess is to the target sea. The colour will turn <span style={{color: '#f04e2e', fontWeight: 'bold'}}>red</span> if your guessed sea borders the target sea.
         </Text>
         <Text mb="md">
           You can drag the globe to rotate it and zoom in/out using pinch or scroll. Hover over your guessed seas to see their names and distances from the target sea.
