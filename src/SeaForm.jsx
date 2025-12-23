@@ -10,6 +10,7 @@ function SeaForm({ onSubmit, guessedSeas }) {
   return (
     <form style={{ width: '100%' }} onSubmit={(e) => { e.preventDefault(); onSubmit(sea); setSea(null);}}>
       <Group style={{ width: '100%' }} spacing="sm" noWrap justify="center">
+        <Button size="md" variant="contained" type="submit" style={{visibility: 'hidden'}} disabled>Guess</Button> {/* hidden button for centering */}
         <Select
           data={[...wordlist].filter(sea => !guessedSeas.some(({name}) => sea === name)).sort((a, b) => a.localeCompare(b))}
           autoSelectOnBlur
