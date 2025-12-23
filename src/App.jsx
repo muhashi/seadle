@@ -330,7 +330,6 @@ const SeadleGame = () => {
         pathSel
           .style('cursor', 'pointer')
           .on('mouseenter', function (event) {
-            if (isDraggingRef.current) return;
             pathSel
               .raise()
               .attr('stroke', HOVER_STROKE)
@@ -345,7 +344,6 @@ const SeadleGame = () => {
             }
           })
           .on('mousemove', function (event) {
-            if (isDraggingRef.current) return;
             if (!guess && !displayAllNames) return;
 
             const bounds = svgRef.current.getBoundingClientRect();
