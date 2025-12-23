@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Stack, Text, Paper, Group, Badge, Anchor } from '@mantine/core';
+import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
@@ -12,33 +13,39 @@ import SeaRegionsJSON from './data/sea-regions.topo.json';
 import wordlist from './data/wordlist.json';
 import './App.css';
 
-const Header = () => (
-  <header style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <Group justify="space-between" align="center" mb="xs">
-      <IconCoffee style={{visibility: 'hidden'}}/> {/* hidden icon for centering */}
-      <Group justify="center" spacing="xs" style={{ marginBottom: '8px' }}>
-        <Text style={{visibility: 'hidden'}}>by muhashi</Text> {/* hidden text for centering */}
-        <Text
-          component="h1"
-          size="3rem"
-          style={{ marginBottom: '8px', color: '#002a4a', fontFamily: 'Comic Sans MS, Comic Sans, Chalkboard SE, Chalkboard, Arial', fontWeight: 'bold', userSelect: 'none' }}
-          onClick={() => {const divs = [...document.getElementsByClassName("bounce-text-span")]; divs.forEach(div => {div.style.animation = "none"; div.offsetHeight; div.style.animation = null;});}}
-        >
-          <div className="bounce-text"><span className="bounce-text-span">S</span><span className="bounce-text-span">e</span><span className="bounce-text-span">a</span><span className="bounce-text-span">d</span><span className="bounce-text-span">l</span><span className="bounce-text-span">e</span></div>
-        </Text>
-        <Text fs="italic" c="dimmed">
-          by <Anchor c="blue" href="https://muhashi.com/" target="_blank" underline="always">muhashi</Anchor>
-        </Text>
-      </Group>
-      <Anchor href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee">
-        <IconCoffee color="#002a4a" />
-      </Anchor>
-    </Group>
+const Header = () => {
+  const isMobile = useMediaQuery(`(max-width: 485px)`);
+
+  return (<header style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <Grid justify="center" align="center">
+      {!isMobile && <Grid.Col span={1}></Grid.Col>}
+      <Grid.Col span={isMobile ? 11 : 10}>
+        <Group justify="center" spacing="xs" style={{ marginBottom: '8px' }}>
+          <Text style={{visibility: 'hidden', display: isMobile ? 'none' : 'block'}}>by muhashi</Text>
+          <Text
+            component="h1"
+            size="3rem"
+            style={{ marginBottom: '8px', color: '#002a4a', fontFamily: 'Comic Sans MS, Comic Sans, Chalkboard SE, Chalkboard, Arial', fontWeight: 'bold', userSelect: 'none' }}
+            onClick={() => {const divs = [...document.getElementsByClassName("bounce-text-span")]; divs.forEach(div => {div.style.animation = "none"; div.offsetHeight; div.style.animation = null;});}}
+          >
+            <div className="bounce-text"><span className="bounce-text-span">S</span><span className="bounce-text-span">e</span><span className="bounce-text-span">a</span><span className="bounce-text-span">d</span><span className="bounce-text-span">l</span><span className="bounce-text-span">e</span></div>
+          </Text>
+          <Text fs="italic" c="dimmed">
+            by <Anchor c="blue" href="https://muhashi.com/" target="_blank" underline="always">muhashi</Anchor>
+          </Text>
+        </Group>
+      </Grid.Col>
+      <Grid.Col span={1}>
+        <Anchor style={{ marginLeft: 'auto' }} href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee">
+          <IconCoffee color="#002a4a" />
+        </Anchor>
+      </Grid.Col>
+    </Grid>
     <Text component="p" size="md" c="dimmed">
       Guess the sea of the day!
     </Text>
-  </header>
-);
+  </header>);
+};
 
 const SeadleGame = () => {
   const svgRef = useRef();
