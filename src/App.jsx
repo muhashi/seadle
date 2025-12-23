@@ -322,7 +322,7 @@ const SeadleGame = () => {
               .attr('stroke-width', 1)
               .attr('fill-opacity', 1);
 
-            if (guess) hideTooltip();
+            if (guess || displayAllNames) hideTooltip();
           });
       });
   }
