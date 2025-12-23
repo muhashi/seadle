@@ -530,28 +530,30 @@ const SeadleGame = () => {
           )}
         </div>
 
-        <Paper p="md" withBorder>
-          <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
-          <Stack spacing="xs">
-            {guesses.toSorted((a, b) => a.distance - b.distance).map((g, i) => (
-              <Group key={i} position="apart">
-                <Badge color={g.distance === 0 ? 'green' : 'gray'}>
-                  {g.name}
-                </Badge>
-                <Group spacing="xs">
-                  <div style={{ 
-                    width: 20, 
-                    height: 20, 
-                    background: g.color,
-                    border: '1px solid #333',
-                    borderRadius: '4px'
-                  }}></div>
-                  <Text size="sm">{Math.round(g.distance)} km</Text>
+        { guesses.length > 0 &&
+          <Paper p="md" withBorder>
+            <Text weight={700} mb="sm">Guesses: {guesses.length}</Text>
+            <Group gap="xl">
+              {guesses.toSorted((a, b) => a.distance - b.distance).map((g, i) => (
+                <Group key={i} position="apart">
+                  <Badge color={g.distance === 0 ? 'green' : 'gray'}>
+                    {g.name}
+                  </Badge>
+                  <Group spacing="xs">
+                    <div style={{ 
+                      width: 20, 
+                      height: 20, 
+                      background: g.color,
+                      border: '1px solid #333',
+                      borderRadius: '4px'
+                    }}></div>
+                    <Text size="sm">{Math.round(g.distance)} km</Text>
+                  </Group>
                 </Group>
-              </Group>
-            ))}
-          </Stack>
-        </Paper>
+              ))}
+            </Group>
+          </Paper>
+        }
       </Stack>
     </div>
   );
