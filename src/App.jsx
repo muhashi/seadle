@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon, Switch } from '@mantine/core';
+import { Alert, Stack, Text, Paper, Group, Badge, Anchor, Grid, Modal, ActionIcon, Switch, Button } from '@mantine/core';
 import { useMediaQuery, useDisclosure } from '@mantine/hooks';
 import { geoCentroid, geoDistance, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
@@ -71,6 +71,42 @@ const Header = () => {
       Guess the sea of the day!
     </Text>
   </header>);
+};
+
+const ShareButton = ({ dayNumber, guesses }) => {
+  const [buttonText, setButtonText] = useState('Share');
+
+  const getEmojiForDistance = (distance) => {
+    const ratio = Math.min(distance / 20000, 1);
+
+    if (ratio === 0) return '🟩';
+    if (ratio < 0.1) return '🟥';
+    if (ratio < 0.4) return '🟧';
+    if (ratio < 0.6) return '🟨';
+    return '⬜';
+  };
+
+  const shareGame = () => {
+    const text = `Seadle ${dayNumber} - ${guesses.length} guesses\n\n${guesses.map(({distance}) => getEmojiForDistance(distance)).join('')}\n\nhttps://seadle.muhashi.com/`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Seadle',
+        text: text
+      });
+    } else {
+      navigator.clipboard.writeText(text);
+    }
+    setButtonText('✓ Copied');
+    setTimeout(() => {
+      setButtonText('Share');
+    }, 1000);
+  };
+
+  return (
+    <Button variant="filled" onClick={shareGame} size="lg">
+      {buttonText}
+    </Button>
+  );
 };
 
 const SeadleGame = () => {
@@ -547,9 +583,12 @@ const SeadleGame = () => {
               duration={3000}
               force={0.6}
             />
-            <Alert variant="light" color="green" styles={{ message: { color: '#194d03' } }}>
-              🎉 Congratulations! You found {targetSea.properties.NAME} in {guesses.length} guesses!
-            </Alert>
+            <Group justify="center" align="center" gap="md">
+              <Alert variant="light" color="green" styles={{ message: { color: '#194d03' }, width: '100%' }}>
+                🎉 Congratulations! You found {targetSea.properties.NAME} in {guesses.length} guesses!
+              </Alert>
+              <ShareButton dayNumber={getDayNumber()} guesses={guesses} />
+            </Group>
           </>
         )}
 
