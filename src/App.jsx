@@ -651,7 +651,15 @@ const SeadleGame = () => {
               />
             </Group>
             <Group gap="xl">
-              {guesses.toSorted((a, b) => a.distance - b.distance).map((g, i) => (
+              {guesses.toSorted((a, b) => {
+                if (a.distance === 0 && b.distance !== 0) return -1;
+                if (b.distance === 0 && a.distance !== 0) return 1;
+
+                if (a.isNeighbour && !b.isNeighbour) return -1;
+                if (b.isNeighbour && !a.isNeighbour) return 1;
+
+                return a.distance - b.distance;
+              }).map((g, i) => (
                 <Group key={i} position="apart">
                   <Badge color={g.distance === 0 ? 'green' : 'gray'}>
                     {g.name}
