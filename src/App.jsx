@@ -26,7 +26,7 @@ const Help = () => {
           After making a guess, the sea will be <span style={{color: '#002a4a', fontWeight: 'bold'}}>highlighted on the globe</span>. The darker the colour, the closer your guess is to the target sea. The colour will turn <span style={{color: '#f04e2e', fontWeight: 'bold'}}>red</span> if your guessed sea borders the target sea.
         </Text>
         <Text mb="md">
-          You can drag the globe to rotate it and zoom in/out using pinch or scroll. Hover over your guessed seas to see their names and distances from the target sea.
+          You can drag the globe to rotate it and zoom in/out using pinch or scroll. Hover over your guessed seas to see their names and distances from the target sea. Distance is based on the distance between the center of the seas.
         </Text>
       </Modal>
 
