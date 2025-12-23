@@ -122,7 +122,8 @@ const SeadleGame = () => {
     y: 0,
     content: null
   });
-  const [distanceFormatKm, setDistanceFormatKm] = useState(localStorage.getItem('distanceFormatKm') === 'true' || false);
+  const [distanceFormatKm, setDistanceFormatKm] = useState(localStorage.getItem('distanceFormatKm') === 'true' || true);
+  const [displayAllNames, setDisplayAllNames] = useState(localStorage.getItem('displayAllNames') === 'true' || false);
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
@@ -268,6 +269,7 @@ const SeadleGame = () => {
       .each(function (d) {
         const pathSel = select(this);
         const guess = guessedByName.get(d.properties.NAME);
+        const notGuessedData = { name: d.properties.NAME, distance: null, isNeighbour: false };
 
         // Base styling
         if (guess) {
@@ -295,13 +297,19 @@ const SeadleGame = () => {
             // Tooltip only for guessed seas
             if (guess) {
               showTooltip(event, guess);
+            } else if (displayAllNames) {
+              showTooltip(event, notGuessedData);
             }
           })
           .on('mousemove', function (event) {
-            if (!guess) return;
+            if (!guess && !displayAllNames) return;
 
             const bounds = svgRef.current.getBoundingClientRect();
-            showTooltip(event, guess);
+            if (guess) {
+              showTooltip(event, guess);
+            } else if (displayAllNames) {
+              showTooltip(event, notGuessedData);
+            }
             setTooltip(t => ({
               ...t,
               x: event.clientX - bounds.left + 12,
@@ -516,7 +524,7 @@ const SeadleGame = () => {
 
   useEffect(() => {
     addHoverHandler();
-  }, [guesses]);
+  }, [guesses, displayAllNames]);
 
   useEffect(() => {
     if (!updatePathsRef.current) return;
@@ -621,9 +629,11 @@ const SeadleGame = () => {
               <Text size="sm" weight={600}>
                 {tooltip.content.name}
               </Text>
-              <Text size="xs" c="dimmed">
-                {tooltip.content.isNeighbour ? `Borders (${getDistanceText(tooltip.content.distance)} away)` : `${getDistanceText(tooltip.content.distance)} away`}
-              </Text>
+              {tooltip.content.distance !== null && (
+                <Text size="xs" c="dimmed">
+                  {tooltip.content.isNeighbour ? `Borders` : `${getDistanceText(tooltip.content.distance)} away`}
+                </Text>
+              )}
             </Paper>
           )}
         </div>
@@ -654,10 +664,25 @@ const SeadleGame = () => {
                       border: '1px solid #333',
                       borderRadius: '4px'
                     }}></div>
-                    <Text size="sm">{g.isNeighbour ? `Borders (${getDistanceText(g.distance)})` : `${getDistanceText(g.distance)}`}</Text>
+                    <Text size="sm">{g.isNeighbour ? `Borders` : `${getDistanceText(g.distance)}`}</Text>
                   </Group>
                 </Group>
               ))}
+            </Group>
+          </Paper>
+        }
+
+        { guesses.length > 0 &&
+          <Paper p="md" withBorder>
+            <Text style={{ fontWeight: "bold" }} mb="sm">Difficulty Settings</Text>
+            <Group justify="space-between" mb="sm">
+              <Switch
+                checked={displayAllNames}
+                onChange={(event) => {setDisplayAllNames(event.currentTarget.checked); localStorage.setItem('displayAllNames', event.currentTarget.checked);}}
+                label="Display all sea names on hover"
+                labelPosition="left"
+                size="md"
+              />
             </Group>
           </Paper>
         }
