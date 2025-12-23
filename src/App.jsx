@@ -115,8 +115,14 @@ const SeadleGame = () => {
     y: 0,
     content: null
   });
-  const [distanceFormatKm, setDistanceFormatKm] = useState(localStorage.getItem('distanceFormatKm') === 'true' || true);
-  const [displayAllNames, setDisplayAllNames] = useState(localStorage.getItem('displayAllNames') === 'true' || false);
+  const [distanceFormatKm, setDistanceFormatKm] = useState(() => {
+    const stored = localStorage.getItem('distanceFormatKm');
+    return stored === null ? true : stored === 'true';
+  });
+  const [displayAllNames, setDisplayAllNames] = useState(() => {
+    const stored = localStorage.getItem('displayAllNames');
+    return stored === null ? false : stored === 'true';
+  });
 
   const projectionRef = useRef(null);
   const pathRef = useRef(null);
