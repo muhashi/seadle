@@ -87,15 +87,8 @@ const ShareButton = ({ dayNumber, guesses }) => {
   };
 
   const shareGame = () => {
-    const text = `Seadle ${dayNumber} - ${guesses.length} guesses\n\n${guesses.map(({distance}) => getEmojiForDistance(distance)).join('')}\n\nhttps://seadle.muhashi.com/`;
-    if (navigator.share) {
-      navigator.share({
-        title: 'Seadle',
-        text: text
-      });
-    } else {
-      navigator.clipboard.writeText(text);
-    }
+    const text = `Seadle #${dayNumber} - ${guesses.length} guesses\n\n${guesses.map(({distance}) => getEmojiForDistance(distance)).join('')}\n\nhttps://seadle.muhashi.com/`;
+    navigator.clipboard.writeText(text);
     setButtonText('✓ Copied');
     setTimeout(() => {
       setButtonText('Share');
