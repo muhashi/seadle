@@ -151,6 +151,18 @@ const SeadleGame = () => {
   const MAX_TILT = 80;
   const MAX_DISTANCE = 20000; // Max possible distance on Earth
 
+  let frameRequested = false;
+
+  const updatePathsThrottled = () => {
+    if (frameRequested) return;
+
+    frameRequested = true;
+    requestAnimationFrame(() => {
+      updatePathsRef.current();
+      frameRequested = false;
+    });
+  };
+
   const getColorForDistance = (distance, maxDistance) => {
     const ratio = Math.min(distance / maxDistance, 1);
 
@@ -256,7 +268,7 @@ const SeadleGame = () => {
         0
       ]));
 
-      updatePaths();
+      updatePathsThrottled();
 
       if (t < 1) requestAnimationFrame(animate);
     };
@@ -515,7 +527,7 @@ const SeadleGame = () => {
             ];
 
             projection.rotate(clampRotation(newRotation));
-            updatePaths();
+            updatePathsThrottled();
           }
           
           lastX = currentX;
