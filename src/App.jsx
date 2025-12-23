@@ -78,6 +78,7 @@ const SeadleGame = () => {
   const [guesses, setGuesses] = useState([]);
   const [gameWon, setGameWon] = useState(false);
   const [seaData, setSeaData] = useState(null);
+  const [targetSeaNeighbours, setTargetSeaNeighbours] = useState(null);
   const [targetSea, setTargetSea] = useState(null);
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -124,6 +125,11 @@ const SeadleGame = () => {
       f => f.properties.NAME.toLowerCase() === todaysSeaName.toLowerCase()
     );
     setTargetSea(todaysSeaData);
+
+    const neighbours = topojson.neighbors(SeaRegionsJSON.objects.seas.geometries);
+    const targetNeighbours = [...neighbours[geojson.features.findIndex(f => f.properties.NAME === todaysSeaData.properties.NAME)]];
+    const targetNeighbourNames = targetNeighbours.map(i => geojson.features[i].properties.NAME);
+    setTargetSeaNeighbours(targetNeighbourNames);
   }, []);
 
   // Save game state
@@ -280,7 +286,6 @@ const SeadleGame = () => {
       f => f.properties.NAME.toLowerCase() === guessedSeaName.toLowerCase()
     );
 
-
     if (!guessedSea) {
       alert('Sea not found. Please enter a valid sea name.');
       return;
@@ -294,11 +299,16 @@ const SeadleGame = () => {
     const distance = calculateDistance(guessedSea, targetSea);
     const maxDistance = 20000; // Max possible distance on Earth
 
+    const isNeighbour = targetSeaNeighbours && targetSeaNeighbours.includes(guessedSea.properties.NAME);
+
+    const color = isNeighbour ? '#f04e2e' : (guessedSeaName === targetSea.properties.NAME ? '#219900' : getColorForDistance(distance, maxDistance));
+
     const newGuess = {
       name: guessedSea.properties.NAME,
       distance,
-      color: getColorForDistance(distance, maxDistance),
-      feature: guessedSea
+      color,
+      feature: guessedSea,
+      isNeighbour,
     };
 
     setGuesses([...guesses, newGuess]);
@@ -568,7 +578,7 @@ const SeadleGame = () => {
                 {tooltip.content.name}
               </Text>
               <Text size="xs" c="dimmed">
-                {Math.round(tooltip.content.distance)} km away
+                {tooltip.content.isNeighbour ? `Borders (${Math.round(tooltip.content.distance)} km away)` : `${Math.round(tooltip.content.distance)} km away`}
               </Text>
             </Paper>
           )}
@@ -591,7 +601,7 @@ const SeadleGame = () => {
                       border: '1px solid #333',
                       borderRadius: '4px'
                     }}></div>
-                    <Text size="sm">{Math.round(g.distance)} km</Text>
+                    <Text size="sm">{g.isNeighbour ? `Borders (${Math.round(g.distance)} km)` : `${Math.round(g.distance)} km`}</Text>
                   </Group>
                 </Group>
               ))}
