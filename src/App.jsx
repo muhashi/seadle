@@ -14,8 +14,13 @@ import './App.css';
 const Header = () => (
   <header style={{ textAlign: 'center', marginBottom: '20px' }}>
     <Group justify="center" spacing="xs" style={{ marginBottom: '8px' }}>
-      <Text component="h1" size="3rem" style={{ marginBottom: '8px', color: '#002a4a', fontFamily: 'Comic Sans MS, Comic Sans, Chalkboard SE, Chalkboard, Arial', fontWeight: 'bold', userSelect: 'none' }}>
-        <div className="bounce-text"><span>S</span><span>e</span><span>a</span><span>d</span><span>l</span><span>e</span></div>
+      <Text
+        component="h1"
+        size="3rem"
+        style={{ marginBottom: '8px', color: '#002a4a', fontFamily: 'Comic Sans MS, Comic Sans, Chalkboard SE, Chalkboard, Arial', fontWeight: 'bold', userSelect: 'none' }}
+        onClick={() => {const divs = [...document.getElementsByClassName("bounce-text-span")]; divs.forEach(div => {div.style.animation = "none"; div.offsetHeight; div.style.animation = null;});}}
+      >
+        <div className="bounce-text"><span className="bounce-text-span">S</span><span className="bounce-text-span">e</span><span className="bounce-text-span">a</span><span className="bounce-text-span">d</span><span className="bounce-text-span">l</span><span className="bounce-text-span">e</span></div>
       </Text>
     </Group>
     <Text component="p" size="md" c="dimmed">
@@ -74,8 +79,6 @@ const SeadleGame = () => {
     const todaysSeaData = geojson.features.find(
       f => f.properties.NAME.toLowerCase() === todaysSeaName.toLowerCase()
     );
-    console.log('Today\'s sea is:', todaysSeaName);
-    console.log(todaysSeaData);
     setTargetSea(todaysSeaData);
   }, []);
 

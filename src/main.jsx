@@ -5,11 +5,11 @@ import '@mantine/core/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core';
 
 const theme = createTheme({
-  // todo
+  fontFamily: 'Arial, sans-serif',
 });
 
 createRoot(document.getElementById('root')).render(
-  <MantineProvider>
+  <MantineProvider theme={theme}>
     <App />
   </MantineProvider>,
 )
