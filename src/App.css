@@ -28,6 +28,7 @@
 
 .kofi-hover {
   color: #002a4a;
+  transition: transform 0.3s;
 }
 
 .kofi-hover:hover {
