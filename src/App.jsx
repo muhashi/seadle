@@ -641,7 +641,7 @@ const SeadleGame = () => {
               force={0.6}
             />
             <Group justify="center" align="center" gap="md">
-              <Alert variant="light" color="green" styles={{ message: { color: '#194d03' }, width: '100%' }}>
+              <Alert variant="light" color="green" styles={{ message: { color: '#194d03', fontWeight: 600 }, width: '100%' }}>
                 🎉 Congratulations! You found {targetSea.properties.NAME} in {guesses.length} guesses!
               </Alert>
               <ShareButton dayNumber={getDayNumber()} guesses={guesses} />
