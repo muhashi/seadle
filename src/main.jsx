@@ -6,6 +6,7 @@ import { createTheme, MantineProvider } from '@mantine/core';
 
 const theme = createTheme({
   fontFamily: 'Arial, sans-serif',
+  cursorType: 'pointer',
 });
 
 createRoot(document.getElementById('root')).render(
