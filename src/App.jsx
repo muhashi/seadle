@@ -29,9 +29,12 @@ const Help = () => {
         <Text mb="md">
           You can drag the globe to rotate it and zoom in/out using pinch or scroll. Hover over your guessed seas to see their names and distances from the target sea. Distance is based on the distance between the center of the seas.
         </Text>
+        <Text mb="md">
+          The direction of the compass is based on the shortest path to the secret sea, so it may be difficult to read when the distance is far, as it may be crossing the poles.
+        </Text>
       </Modal>
 
-      <ActionIcon variant="transparent" c="#002a4a" onClick={open}>
+      <ActionIcon variant="transparent" c="#002a4a" onClick={open} title="How to Play">
         <IconHelp />
       </ActionIcon>
     </>
