@@ -8,6 +8,7 @@ import * as topojson from 'topojson-client';
 import ConfettiExplosion from 'react-confetti-blast';
 import { IconCoffee, IconHelp } from '@tabler/icons-react';
 
+import Compass from './Compass.jsx';
 import SeaForm from './SeaForm.jsx';
 import SeaRegionsJSON from './data/sea-regions.topo.json';
 import wordlist from './data/wordlist.json';
@@ -274,6 +275,24 @@ const SeadleGame = () => {
     };
 
     requestAnimationFrame(animate);
+  };
+
+  function bearingBetweenFeatures(fromFeature, toFeature) {
+    const [lon1, lat1] = geoCentroid(fromFeature);
+    const [lon2, lat2] = geoCentroid(toFeature);
+
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const delta = (lon2 - lon1) * Math.PI / 180;
+
+    const y = Math.sin(delta) * Math.cos(phi2);
+    const x =
+      Math.cos(phi1) * Math.sin(phi2) -
+      Math.sin(phi1) * Math.cos(phi2) * Math.cos(delta);
+
+    const theta = Math.atan2(y, x);
+
+    return (theta * 180 / Math.PI + 360) % 360;
   };
 
   const showTooltip = (event, data) => {
@@ -703,6 +722,7 @@ const SeadleGame = () => {
                       borderRadius: '4px'
                     }}></div>
                     <Text size="sm">{g.isNeighbour ? `Borders` : `${getDistanceText(g.distance)}`}</Text>
+                    {i === 0 && g.distance !== 0 && <Compass bearing={bearingBetweenFeatures(g.feature, targetSea)}/>}
                   </Group>
                 </Group>
               ))}
