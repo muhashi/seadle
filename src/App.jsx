@@ -44,8 +44,8 @@ const Header = () => {
   return (<header style={{ textAlign: 'center', marginBottom: '20px' }}>
     <Grid justify="center" align="center">
       <Grid.Col span={1}>
-        <Anchor style={{ marginLeft: 'auto' }} href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee">
-          <IconCoffee color="#002a4a" />
+        <Anchor style={{ marginLeft: 'auto', cursor: 'pointer' }} href="https://ko-fi.com/muhashi" target="_blank" underline="none" title="Buy me a coffee <3">
+          <IconCoffee className="kofi-hover" />
         </Anchor>
       </Grid.Col>
       <Grid.Col span={10}>
