@@ -132,6 +132,11 @@ const SeadleGame = () => {
     const stored = localStorage.getItem('displayAllNames');
     return stored === null ? false : stored === 'true';
   });
+  const [displayCompass, setDisplayCompass] = useState(() => {
+    const stored = localStorage.getItem('displayCompass');
+    return stored === null ? true : stored === 'true';
+  });
+
   const [guessedNames, setGuessedNames] = useState(() => {
     const stored = localStorage.getItem(`seadle-${getDayNumber()}`);
     const storedJSON = stored ? JSON.parse(stored) : null;
@@ -722,7 +727,7 @@ const SeadleGame = () => {
                       borderRadius: '4px'
                     }}></div>
                     <Text size="sm">{g.isNeighbour ? `Borders` : (g.distance === 0 ? 'Correct!' : `${getDistanceText(g.distance)}`)}</Text>
-                    {i === 0 && g.distance !== 0 && <Compass bearing={bearingBetweenFeatures(g.feature, targetSea)}/>}
+                    {i === 0 && g.distance !== 0 && displayCompass && <Compass bearing={bearingBetweenFeatures(g.feature, targetSea)}/>}
                   </Group>
                 </Group>
               ))}
@@ -733,11 +738,18 @@ const SeadleGame = () => {
         { guesses.length > 0 &&
           <Paper p="md" withBorder>
             <Text style={{ fontWeight: "bold" }} mb="sm">Difficulty Settings</Text>
-            <Group justify="space-between" mb="sm">
+            <Group justify="flex-start" mb="sm" gap="2rem">
               <Switch
                 checked={displayAllNames}
                 onChange={(event) => {setDisplayAllNames(event.currentTarget.checked); localStorage.setItem('displayAllNames', event.currentTarget.checked);}}
                 label="Display all sea names on hover"
+                labelPosition="left"
+                size="md"
+              />
+              <Switch
+                checked={displayCompass}
+                onChange={(event) => {setDisplayCompass(event.currentTarget.checked); localStorage.setItem('displayCompass', event.currentTarget.checked);}}
+                label="Display compass"
                 labelPosition="left"
                 size="md"
               />
