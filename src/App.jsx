@@ -721,7 +721,7 @@ const SeadleGame = () => {
                       border: '1px solid #333',
                       borderRadius: '4px'
                     }}></div>
-                    <Text size="sm">{g.isNeighbour ? `Borders` : `${getDistanceText(g.distance)}`}</Text>
+                    <Text size="sm">{g.isNeighbour ? `Borders` : (g.distance === 0 ? 'Correct!' : `${getDistanceText(g.distance)}`)}</Text>
                     {i === 0 && g.distance !== 0 && <Compass bearing={bearingBetweenFeatures(g.feature, targetSea)}/>}
                   </Group>
                 </Group>
