@@ -133,7 +133,7 @@ const SeadleGame = () => {
   });
   const [displayAllNames, setDisplayAllNames] = useState(() => {
     const stored = localStorage.getItem('displayAllNames');
-    return stored === null ? false : stored === 'true';
+    return stored === null ? true : stored === 'true';
   });
   const [displayCompass, setDisplayCompass] = useState(() => {
     const stored = localStorage.getItem('displayCompass');
