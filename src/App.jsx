@@ -80,18 +80,18 @@ const Header = () => {
 const ShareButton = ({ dayNumber, guesses }) => {
   const [buttonText, setButtonText] = useState('Share');
 
-  const getEmojiForDistance = (distance) => {
+  const getEmojiForDistance = (distance, isNeighbour) => {
     const ratio = Math.min(distance / 20000, 1);
 
     if (ratio === 0) return '🟩';
-    if (ratio < 0.1) return '🟥';
+    if (isNeighbour) return '🟥';
     if (ratio < 0.4) return '🟧';
     if (ratio < 0.6) return '🟨';
     return '⬜';
   };
 
   const shareGame = () => {
-    const text = `Seadle #${dayNumber} - ${guesses.length} guesses\n\n${guesses.map(({distance}) => getEmojiForDistance(distance)).join('')}\n\nhttps://seadle.muhashi.com/`;
+    const text = `Seadle #${dayNumber} - ${guesses.length} guesses\n\n${guesses.map(({distance, isNeighbour}) => getEmojiForDistance(distance, isNeighbour)).join('')}\n\nhttps://seadle.muhashi.com/`;
     navigator.clipboard.writeText(text);
     setButtonText('✓ Copied');
     setTimeout(() => {
