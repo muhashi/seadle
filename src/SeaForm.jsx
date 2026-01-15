@@ -5,11 +5,6 @@ import { useMediaQuery } from '@mantine/hooks';
 
 import wordlist from './data/wordlist.json';
 
-const synonyms = {
-  "Gulf of St. Lawrence": ["Gulf of Saint Lawrence"],
-  "Irish Sea and St. George's Channel": ["Irish Sea and Saint George's Channel"],
-};
-
 function SeaForm({ onSubmit, guessedSeas }) {
   const [sea, setSea] = useState('');
   const isMobile = useMediaQuery(`(max-width: 485px)`);
